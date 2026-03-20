@@ -1,3 +1,3 @@
 from django.test import TestCase
+from .views import flashlight_tasks
 
-# Create your tests here.
