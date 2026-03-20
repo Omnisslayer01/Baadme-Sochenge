@@ -1,0 +1,11 @@
+{% extends 'planner/layout.html'%}
+{% block body %}
+    {{task}}
+    <hr>
+
+    {% for filtered_task in filtered_tasks%}
+        {{filtered_task}} <br>
+    {% empty %}
+        <h3>You may rest for the day or please add a NEW GOAL</h3>
+    {% endfor %}
+{% endblock %}
