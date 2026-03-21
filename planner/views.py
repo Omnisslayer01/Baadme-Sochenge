@@ -1,7 +1,7 @@
-    from django.shortcuts import render
-    from .models import User_state,Vault_Goal,Micro_task
-
-    def flashlight_tasks(request):
+from django.shortcuts import render
+from .models import User_state,Vault_Goal,Micro_task
+from django.shortcuts import redirect
+def flashlight_tasks(request):
         user=request.user
         user_state=User_state.objects.get(user=user)
         user_energy_level=user_state.current_energy_level
@@ -24,19 +24,21 @@
         }
         )
 
-    def CompleteIt(request):
-        user = request.user
-        microtask= Micro_task.objects.filter(
-            parent_goal__user = user,
-            status = ""
-            )
-        if status == 0:
-            microtask.skip_count +=1
-            if microtask.skip_count > 2:
-                microtask.status = "Intervention"
-        elif statuss ==1:
-            microtask.status = "Completed"
-            flashlighttask.pop
+def update_task(request):
+        if request.method == 'POST':
+            task_id = request.POST.get('task_id')
+            action = request.POST.get('action')
+            task =  Micro_task.objects.get(id= task_id , parent_goal__user= request.user)
+            if action == "complete":
+                task.status = "completed"
+            elif action == "skip":
+                task.skip_count +=1
+                if task.skip_count >=3:
+                    task.status = "intervention"
+            task.save()
+        return redirect('home')
+
+
 
         
 
