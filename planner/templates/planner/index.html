@@ -10,13 +10,18 @@
     {% endfor %}
     <h4> energy cost for this particular task is: {{task_Cost}}</h4>
 
-    <form method="POST" action="{% url 'update_task' %}">
-        {% csrf_token %}
 
-        <input type="hidden" name="task_id" value="{{task.id}}">
+    {% if not task and task_Cost == 0 %}
 
-        <button type="submit" name="action" value="complete">Mark Complete</button>
-        <button type="submit" name="action" value="skip">Too Tired(skip)</button>
-    </form>
+    {% else %}
+        <form method="POST" action="{% url 'update_task' %}">
+            {% csrf_token %}
+
+            <input type="hidden" name="task_id" value="{{task.id}}">
+
+            <button type="submit" name="action" value="complete">Mark Complete</button>
+            <button type="submit" name="action" value="skip">Too Tired(skip)</button>
+        </form>
+    {% endif %}
 
 {% endblock %}
