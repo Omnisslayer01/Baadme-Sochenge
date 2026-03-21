@@ -10,4 +10,13 @@
     {% endfor %}
     <h4> energy cost for this particular task is: {{task_Cost}}</h4>
 
+    <form method="POST" action="">
+        {% csrf_token %}
+
+        <input type="hidden" name="task_id" value="{{task.id}}">
+
+        <button type="submit" name="action" value="Complete">Mark Complete</button>
+        <button type="submit" name="action" value="Skip">Too Tired(skip)</button>
+    </form>
+
 {% endblock %}
