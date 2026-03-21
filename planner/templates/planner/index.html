@@ -1,4 +1,3 @@
-
 {% extends 'planner/layout.html'%}
 {% block body %}
   <!-- clouds -->
@@ -57,11 +56,11 @@
         </div>
 
         <!-- Task 1 -->
-        {% for i,d in enumerate(filtered_tasks) %}
+        {% for tasks in filtered_tasks %}
           <div class="task-item active-task">
             <div class="task-header">
               <div class="task-name">
-                <span class="task-num">{{ i+1 }}.</span> {{task.title}}
+                <span class="task-num">{{ tasks.index(tasks.title) }}.</span> {{tasks.title}}
               </div>
               <div class="energy-badge">
                 <span class="energy-label">Energy:</span>
