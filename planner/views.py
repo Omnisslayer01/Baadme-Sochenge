@@ -11,9 +11,15 @@ def flashlight_tasks(request):
         energy_cost__lte=user_energy_level
         )
     flashlighttask=microtask.first()
+    taskcost = flashlighttask.energy_cost
+    if flashlighttask == None:
+        taskcost = 0
+    
+    
     return render(request, 'planner/index.html',{
         'task':flashlighttask,
-        'filtered_tasks':microtask
+        'filtered_tasks':microtask, 
+        'task_Cost': taskcost, 
     })
     
 
