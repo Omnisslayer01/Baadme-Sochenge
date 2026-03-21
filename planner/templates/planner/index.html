@@ -1,27 +1,171 @@
+
 {% extends 'planner/layout.html'%}
 {% block body %}
-    {{task}}
-    <hr>
+  <!-- clouds -->
+  <div class="cloud cloud-1"></div>
+  <div class="cloud cloud-2"></div>
+  <div class="cloud cloud-3"></div>
 
-    {% for filtered_task in filtered_tasks%}
-        {{filtered_task}} <br>
-    {% empty %}
-        <h3>You may rest for the day or please add a NEW GOAL</h3>
-    {% endfor %}
-    <h4> energy cost for this particular task is: {{task_Cost}}</h4>
+  <div class="app-shell">
 
+    <!-- ══════ LEFT: CHARACTER ══════ -->
+    <div class="left-panel">
+      <div class="character-area">
+        <!-- Swap this img src with your anime character image -->
+        <div class="char-placeholder" id="charPlaceholder">
+          🌸
+          <div class="char-placeholder-label">Drop character image here</div>
+        </div>
+        <!-- <img class="character-img" src="your-character.png" alt="Companion" id="charImg"/> -->
+      </div>
 
-    {% if not task and task_Cost == 0 %}
+      <!-- AI Speech Bubble -->
+      <div class="speech-bubble" id="speechBubble">
+        <span class="bubble-heart">💗</span>
+        <div class="bubble-text" id="bubbleText">
+          <span class="loading-dots">
+            <span>●</span><span>●</span><span>●</span>
+          </span>
+        </div>
+        <button class="regen-btn" id="regenBtn" title="New message" onclick="generateDialogue()">↻</button>
+      </div>
+    </div>
 
-    {% else %}
-        <form method="POST" action="{% url 'update_task' %}">
+    <!-- ══════ RIGHT: TASKS ══════ -->
+    <div class="right-panel">
+
+      <!-- Stats bar -->
+      <div class="stats-bar">
+        <div class="stat-chip">
+          <span class="stat-chip-label">Tasks Completed</span>
+          <span class="stat-chip-value" id="statCompleted">5</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-chip-label">Tasks Left</span>
+          <span class="stat-chip-value" id="statLeft">3</span>
+        </div>
+        <div class="stat-chip">
+          <span class="stat-chip-label">Subtasks Left</span>
+          <span class="stat-chip-value" id="statSub">6</span>
+        </div>
+      </div>
+
+      <!-- Task list -->
+      <div class="task-panel">
+        <div class="task-panel-title">
+          📋 Today's Tasks
+        </div>
+
+        <!-- Task 1 -->
+        {% for i,d in enumerate(filtered_tasks) %}
+          <div class="task-item active-task">
+            <div class="task-header">
+              <div class="task-name">
+                <span class="task-num">{{ i+1 }}.</span> {{task.title}}
+              </div>
+              <div class="energy-badge">
+                <span class="energy-label">Energy:</span>
+                <span class="energy-val-high">High</span>
+                <span class="energy-bar bar-high"></span>
+              </div>
+            </div>
+            <div class="subtask-row">
+              <span class="subtask-icon">✅</span> Outline the main points
+            </div>
+            <div class="subtask-row">
+              <span class="subtask-icon">✅</span> Draft the introduction
+            </div>
+            <div class="subtask-row" style="opacity:0.5;">
+              <span class="subtask-icon">⬜</span> Write conclusion
+            </div>
+          </div>
+        {% endfor %}
+
+        <!-- Task 2 -->
+        <div class="task-item">
+          <div class="task-header">
+            <div class="task-name">
+              <span class="task-num">2.</span> Do the Dishes
+            </div>
+            <div class="energy-badge">
+              <span class="energy-label">Energy:</span>
+              <span class="energy-val-med">Medium</span>
+              <span class="energy-bar bar-medium"></span>
+            </div>
+          </div>
+          <div class="subtask-row" style="opacity:0.5;">
+            <span class="subtask-icon">⬜</span> Wash & dry
+          </div>
+          <div class="subtask-row" style="opacity:0.5;">
+            <span class="subtask-icon">⬜</span> Put away
+          </div>
+        </div>
+
+        <!-- Task 3 -->
+        <div class="task-item">
+          <div class="task-header">
+            <div class="task-name">
+              <span class="task-num">3.</span> Take a Short Walk
+            </div>
+            <div class="energy-badge">
+              <span class="energy-label">Energy:</span>
+              <span class="energy-val-low">Low</span>
+              <span class="energy-bar bar-low"></span>
+            </div>
+          </div>
+          <div class="subtask-row" style="opacity:0.5;">
+            <span class="subtask-icon">⬜</span> 15 min outdoor walk
+          </div>
+        </div>
+
+        <!-- Task 4 -->
+        <div class="task-item">
+          <div class="task-header">
+            <div class="task-name">
+              <span class="task-num">4.</span> Read 10 Pages
+            </div>
+            <div class="energy-badge">
+              <span class="energy-label">Energy:</span>
+              <span class="energy-val-low">Low</span>
+              <span class="energy-bar bar-low"></span>
+            </div>
+          </div>
+          <div class="subtask-row" style="opacity:0.5;">
+            <span class="subtask-icon">⬜</span> Current book
+          </div>
+        </div>
+      </div>
+
+      <!-- Energy footer -->
+      <div class="energy-footer">
+        <div class="energy-footer-item">
+          Your Energy Level:
+          <div class="big-bar" style="width:80px;background:linear-gradient(to right,#27ae60,#2ecc71);"></div>
+        </div>
+        <div class="energy-footer-item" style="margin-left:auto;">
+          Task Energy Level:
+          <div class="big-bar" style="width:70px;background:linear-gradient(to right,#c0392b,#e74c3c);"></div>
+        </div>
+      </div>
+
+      <!-- Action buttons -->
+      <div class="action-row">
+        {% if not task and task_Cost == 0 %}
+
+        {% else %}
+          <form method="POST" action="{% url 'update_task' %}">
             {% csrf_token %}
-
             <input type="hidden" name="task_id" value="{{task.id}}">
+            <button class="btn-complete" type="submit" name="action" value="complete">
+              ✔ Complete Task
+            </button>
+            <button class="btn-skip" type="submit" name="action" value="skip">
+              ✕ Skip Task
+            </button>
+          </form>
+        {% endif %}
+      </div>
 
-            <button type="submit" name="action" value="complete">Mark Complete</button>
-            <button type="submit" name="action" value="skip">Too Tired(skip)</button>
-        </form>
-    {% endif %}
-
+    </div>
+  </div>
 {% endblock %}
