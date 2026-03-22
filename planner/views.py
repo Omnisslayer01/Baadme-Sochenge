@@ -18,9 +18,9 @@ def flashlight_tasks(request):
         taskcost = flashlighttask.energy_cost
 
     return render(request, 'planner/index.html',{
-        'task':flashlighttask,
+        'flashlight_task':flashlighttask,
         'filtered_tasks':microtask, 
-        'task_Cost': taskcost, 
+        'task_cost': taskcost, 
     }
     )
 

@@ -56,19 +56,18 @@
         </div>
 
         <!-- Task 1 -->
-        {% for tasks in filtered_tasks %}
-          <div class="task-item active-task">
+          <div class="task-item active-task">  <!-- in this class put 'active-task' to get a darker highlight on the webpage-->
             <div class="task-header">
               <div class="task-name">
-                <span class="task-num">{{ tasks.index(tasks.title) }}.</span> {{tasks.title}}
+                <span class="task-num">✨</span> {{flashlight_task.title}}
               </div>
               <div class="energy-badge">
                 <span class="energy-label">Energy:</span>
-                <span class="energy-val-high">High</span>
+                <span class="energy-val-high">{{flashlight_task.energy_cost}}</span>
                 <span class="energy-bar bar-high"></span>
               </div>
             </div>
-            <div class="subtask-row">
+            <!-- <div class="subtask-row">
               <span class="subtask-icon">✅</span> Outline the main points
             </div>
             <div class="subtask-row">
@@ -76,65 +75,10 @@
             </div>
             <div class="subtask-row" style="opacity:0.5;">
               <span class="subtask-icon">⬜</span> Write conclusion
-            </div>
+            </div> -->
           </div>
-        {% endfor %}
 
-        <!-- Task 2 -->
-        <div class="task-item">
-          <div class="task-header">
-            <div class="task-name">
-              <span class="task-num">2.</span> Do the Dishes
-            </div>
-            <div class="energy-badge">
-              <span class="energy-label">Energy:</span>
-              <span class="energy-val-med">Medium</span>
-              <span class="energy-bar bar-medium"></span>
-            </div>
-          </div>
-          <div class="subtask-row" style="opacity:0.5;">
-            <span class="subtask-icon">⬜</span> Wash & dry
-          </div>
-          <div class="subtask-row" style="opacity:0.5;">
-            <span class="subtask-icon">⬜</span> Put away
-          </div>
-        </div>
-
-        <!-- Task 3 -->
-        <div class="task-item">
-          <div class="task-header">
-            <div class="task-name">
-              <span class="task-num">3.</span> Take a Short Walk
-            </div>
-            <div class="energy-badge">
-              <span class="energy-label">Energy:</span>
-              <span class="energy-val-low">Low</span>
-              <span class="energy-bar bar-low"></span>
-            </div>
-          </div>
-          <div class="subtask-row" style="opacity:0.5;">
-            <span class="subtask-icon">⬜</span> 15 min outdoor walk
-          </div>
-        </div>
-
-        <!-- Task 4 -->
-        <div class="task-item">
-          <div class="task-header">
-            <div class="task-name">
-              <span class="task-num">4.</span> Read 10 Pages
-            </div>
-            <div class="energy-badge">
-              <span class="energy-label">Energy:</span>
-              <span class="energy-val-low">Low</span>
-              <span class="energy-bar bar-low"></span>
-            </div>
-          </div>
-          <div class="subtask-row" style="opacity:0.5;">
-            <span class="subtask-icon">⬜</span> Current book
-          </div>
-        </div>
-      </div>
-
+        
       <!-- Energy footer -->
       <div class="energy-footer">
         <div class="energy-footer-item">
@@ -152,7 +96,7 @@
         {% if not task and task_Cost == 0 %}
 
         {% else %}
-          <form method="POST" action="{% url 'update_task' %}">
+          <form method="POST" action="{% url 'update_task' %}" class="flex gap-2 w-full mt-4">
             {% csrf_token %}
             <input type="hidden" name="task_id" value="{{task.id}}">
             <button class="btn-complete" type="submit" name="action" value="complete">
