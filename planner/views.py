@@ -4,18 +4,18 @@ from django.shortcuts import redirect
 def flashlight_tasks(request):
     user=request.user
     user_state=User_state.objects.get(user=user)
-    user_energy_level=user_state.current_energy_level
+    user_stamina=user_state.current_stamina
     microtask=Micro_task.objects.filter(
         parent_goal__user=user,
         status='vaulted',
-        energy_cost__lte=user_energy_level
+        threat__lte=user_stamina
         )
     flashlighttask=microtask.first()
     
     if flashlighttask == None:
         taskcost = 0
     else :
-        taskcost = flashlighttask.energy_cost
+        taskcost = flashlighttask.threat
 
     return render(request, 'planner/index.html',{
         'flashlight_task':flashlighttask,
