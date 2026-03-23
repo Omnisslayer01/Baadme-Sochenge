@@ -36,8 +36,8 @@
       <!-- Stats bar -->
       <div class="stats-bar">
         <div class="stat-chip">
-          <span class="stat-chip-label">Tasks Completed</span>
-          <span class="stat-chip-value" id="statCompleted">5</span>
+          <span class="stat-chip-label">Bounties Cleared</span>
+          <span class="stat-chip-value" id="statCompleted">{{cleared_count}}</span>
         </div>
       </div>
 
@@ -55,7 +55,7 @@
               </div>
               <div class="energy-badge">
                 <span class="energy-label">Energy:</span>
-                <span class="energy-val-high">{{flashlight_task.energy_cost}}</span>
+                <span class="energy-val-high">{{flashlight_task.get_threat_display}}</span>
                 <span class="energy-bar bar-high"></span>
               </div>
             </div>
@@ -85,22 +85,21 @@
 
       <!-- Action buttons -->
       <div class="action-row">
-        {% if not task and task_Cost == 0 %}
-
-        {% else %}
+        {% if flashlight_task %}
           <form method="POST" action="{% url 'update_task' %}" class="flex gap-2 w-full mt-4">
             {% csrf_token %}
-            <input type="hidden" name="task_id" value="{{task.id}}">
+            <input type="hidden" name="task_id" value="{{flashlight_task.id}}">
             <button class="btn-complete" type="submit" name="action" value="complete">
-              ✔ Complete Task
+              ✔ Defeat Target
             </button>
             <button class="btn-skip" type="submit" name="action" value="skip">
-              ✕ Skip Task
+              ✕ Retreat
             </button>
           </form>
+        {% else %}
+           <div class="text-center py-10 text-sky-800 font-bold w-full">
+              No targets matching your current HP. Rest, Hero!
+           </div>
         {% endif %}
       </div>
-
-    </div>
-  </div>
 {% endblock %}
