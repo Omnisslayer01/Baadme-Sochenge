@@ -21,7 +21,7 @@ def flashlight_tasks(request):
     else :
         taskcost = flashlighttask.threat 
 
-    cleared_count = Micro_task.objects.filter(parent_goal__user=user, status="defeated").count()
+    cleared_count = Micro_task.objects.filter(parent_goal__user=user,status="defeated").count()
     return render(request, 'planner/index.html',{
         'flashlight_task':flashlighttask,
         'filtered_tasks':microtask, 
