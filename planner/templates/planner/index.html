@@ -1,135 +1,262 @@
-{% extends 'planner/layout.html'%}
-{% block body %}
-  <!-- clouds -->
-  <div class="cloud cloud-1"></div>
-  <div class="cloud cloud-2"></div>
-  <div class="cloud cloud-3"></div>
-
-  <div class="app-shell">
-
-    <!-- ══════ LEFT: CHARACTER ══════ -->
-    <div class="left-panel">
-      <div class="character-area">
-        <!-- Swap this img src with your anime character image -->
-        <div class="char-placeholder" id="charPlaceholder">
-          🌸
-          <div class="char-placeholder-label">Drop character image here</div>
-        </div>
-        <!-- <img class="character-img" src="your-character.png" alt="Companion" id="charImg"/> -->
-      </div>
-
-      <!-- AI Speech Bubble -->
-      <div class="speech-bubble" id="speechBubble">
-        <span class="bubble-heart">💗</span>
-        <div class="bubble-text" id="bubbleText">
-          <span class="loading-dots">
-            <span>●</span><span>●</span><span>●</span>
-          </span>
-        </div>
-        <button class="regen-btn" id="regenBtn" title="New message" onclick="generateDialogue()">↻</button>
-      </div>
-    </div>
-
-    <!-- ══════ RIGHT: TASKS ══════ -->
-    <div class="right-panel">
-
-      <!-- Stats bar -->
-      <div class="stats-bar">
-        <div class="stat-chip">
-          <span class="stat-chip-label">Bounties Cleared</span>
-          <span class="stat-chip-value" id="statCompleted">{{cleared_count}}</span>
-        </div>
-      </div>
-
-      <!-- Task list -->
-      <div class="task-panel">
-        <div class="task-panel-title">
-          📋 Today's Tasks
-        </div>
-
-        <!-- Task 1 -->
-          <div class="task-item active-task">  <!-- in this class put 'active-task' to get a darker highlight on the webpage-->
-            <div class="task-header">
-              <div class="task-name">
-                <span class="task-num">✨</span> {{flashlight_task.title}}
-              </div>
-              <div class="energy-badge">
-                <span class="energy-label">Energy:</span>
-                <span class="energy-val-high">{{flashlight_task.get_threat_display}}</span>
-                <span class="energy-bar bar-high"></span>
-              </div>
-            </div>
-            <!-- <div class="subtask-row">
-              <span class="subtask-icon">✅</span> Outline the main points
-            </div>
-            <div class="subtask-row">
-              <span class="subtask-icon">✅</span> Draft the introduction
-            </div>
-            <div class="subtask-row" style="opacity:0.5;">
-              <span class="subtask-icon">⬜</span> Write conclusion
-            </div> -->
-          </div>
-
-        
-      <!-- Energy footer -->
-      <div class="energy-footer">
-        <div class="energy-footer-item">
-          Your Energy Level:
-          <div class="big-bar" style="width:80px;background:linear-gradient(to right,#27ae60,#2ecc71);"></div>
-        </div>
-        <div class="energy-footer-item" style="margin-left:auto;">
-          Task Energy Level:
-          <div class="big-bar" style="width:70px;background:linear-gradient(to right,#c0392b,#e74c3c);"></div>
-        </div>
-      </div>
-
-      <!-- THE BOUNTY ENCOUNTER -->
-<div class="flex flex-col items-center justify-center h-full w-full py-10">
+<!-- templates/planner/index.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Project Cortex - Modern Adventurer's Guild</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
     
-    <div class="text-xl font-black text-sky-900 mb-6 tracking-widest uppercase">
-        ⚠️ Active Bounty ⚠️
-    </div>
-
-    {% if flashlight_task %}
-    <!-- THE ANIMATED CARD -->
-    <div class="w-full max-w-md backdrop-blur-md bg-white/60 border-2 border-sky-300 rounded-3xl p-8 shadow-2xl transition-all duration-300 hover:-translate-y-2 hover:shadow-sky-400/50 relative overflow-hidden">
+    <style>
+        :root {
+            --parchment: #FDFBF7;
+            --modern-gold: #FACC15;
+            --magic-glow: rgba(250, 204, 21, 0.4);
+            --guild-green: #059669;
+        }
         
-        <!-- Threat Level Badge -->
-        <div class="absolute top-0 right-0 bg-sky-500 text-white text-xs font-bold px-4 py-1 rounded-bl-xl">
-            {{ flashlight_task.get_threat_display }}
+        body {
+            font-family: 'Nunito', sans-serif;
+            background-color: #1a120b;
+        }
+
+        .font-fantasy { font-family: 'Cinzel', serif; }
+
+        /* --- ANIMATIONS FOR "LIFE" --- */
+        @keyframes float {
+            0% { transform: translateY(0px) rotate(-1deg); }
+            50% { transform: translateY(-8px) rotate(-0.5deg); }
+            100% { transform: translateY(0px) rotate(-1deg); }
+        }
+        @keyframes pulse-glow {
+            0% { box-shadow: 0 0 15px var(--magic-glow); }
+            50% { box-shadow: 0 0 30px rgba(250, 204, 21, 0.8); }
+            100% { box-shadow: 0 0 15px var(--magic-glow); }
+        }
+        @keyframes drift {
+            0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
+            20% { opacity: 0.8; }
+            80% { opacity: 0.5; }
+            100% { transform: translateY(-150px) translateX(30px) scale(0.5); opacity: 0; }
+        }
+
+        /* --- MODERN FANTASY STYLING --- */
+        
+        /* Vibrant, warm wood with a magical spotlight */
+        .modern-wood-board {
+            background-color: #3e2211;
+            background-image: 
+                radial-gradient(circle at 50% 40%, rgba(250, 204, 21, 0.15) 0%, transparent 60%),
+                repeating-linear-gradient(to right, transparent, transparent 60px, rgba(0,0,0,0.2) 60px, rgba(0,0,0,0.2) 62px);
+            box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.8);
+        }
+
+        /* Glassmorphism UI Elements */
+        .glass-panel {
+            background: rgba(25, 15, 10, 0.65);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(250, 204, 21, 0.2);
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+        }
+
+        /* The Main Focus Card - Clean, Bright, Modern */
+        .modern-card {
+            background: var(--parchment);
+            border-radius: 12px;
+            box-shadow: 
+                0 25px 50px -12px rgba(0, 0, 0, 0.7),
+                0 0 0 1px rgba(250, 204, 21, 0.3),
+                0 0 30px rgba(250, 204, 21, 0.1);
+            animation: float 6s ease-in-out infinite;
+        }
+
+        /* Modern Gradient Buttons */
+        .btn-modern {
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            font-family: 'Nunito', sans-serif;
+            font-weight: 800;
+            border-radius: 8px;
+            position: relative;
+            overflow: hidden;
+        }
+        .btn-modern::after {
+            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+            transition: 0.5s;
+        }
+        .btn-modern:hover::after { left: 100%; }
+        
+        .btn-accept {
+            background: linear-gradient(135deg, #10B981 0%, #047857 100%);
+            border: 1px solid #34D399;
+            color: white;
+            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
+        }
+        .btn-accept:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(5, 150, 105, 0.6); }
+        
+        .btn-retreat {
+            background: linear-gradient(135deg, #3F3F46 0%, #18181B 100%);
+            border: 1px solid #71717A;
+            color: #E4E4E7;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
+        }
+        .btn-retreat:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); }
+
+        /* Glowing Crystal Pushpin */
+        .magic-pin {
+            background: radial-gradient(circle at 30% 30%, #FEF08A 0%, #EAB308 50%, #A16207 100%);
+            animation: pulse-glow 3s infinite;
+            border: 2px solid #FEF08A;
+        }
+
+        /* Floating Particles setup */
+        .particle {
+            position: absolute;
+            background: #FACC15;
+            border-radius: 50%;
+            pointer-events: none;
+            filter: blur(2px);
+            box-shadow: 0 0 10px #FACC15, 0 0 20px #FACC15;
+        }
+    </style>
+</head>
+<body class="h-screen w-full flex overflow-hidden text-stone-800 antialiased">
+
+    <!-- ==========================================
+         LEFT PANEL: THE GUILD RECEPTION (30%)
+    =========================================== -->
+    <div class="w-[30%] h-full relative bg-gradient-to-b from-[#1c1816] to-[#0f0a08] flex flex-col justify-end border-r border-yellow-900/30 shadow-[20px_0_50px_rgba(0,0,0,0.8)] z-20">
+        
+        <!-- Bright ambient backlight for the character -->
+        <div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-80 h-80 bg-emerald-500/10 rounded-full blur-[80px] pointer-events-none"></div>
+
+        <!-- Modern Vibrant Canopy -->
+        <div class="absolute top-0 w-full h-52 z-10 flex flex-col items-center pt-8" style="background: linear-gradient(180deg, #064E3B 0%, #065F46 100%); border-bottom-left-radius: 50% 15%; border-bottom-right-radius: 50% 15%; box-shadow: 0 15px 35px rgba(0,0,0,0.6), inset 0 -4px 15px rgba(0,0,0,0.4);">
+            <div class="absolute bottom-0 w-full h-1 bg-gradient-to-r from-yellow-600 via-yellow-300 to-yellow-600"></div>
+
+            <!-- Glowing Modern Emblem -->
+            <div class="w-16 h-16 bg-stone-900 border-2 border-yellow-400 rotate-45 mb-6 shadow-[0_0_20px_rgba(250,204,21,0.4)] flex items-center justify-center relative overflow-hidden group cursor-pointer hover:shadow-[0_0_30px_rgba(250,204,21,0.6)] transition-all">
+                <div class="absolute inset-0 bg-yellow-400/10 group-hover:bg-yellow-400/20 transition-colors"></div>
+                <span class="font-fantasy text-yellow-400 -rotate-45 text-2xl drop-shadow-[0_0_8px_rgba(250,204,21,0.8)]">✦</span>
+            </div>
+            <h1 class="font-fantasy text-yellow-400 text-3xl font-bold tracking-[0.2em] uppercase drop-shadow-md">Ad Astra</h1>
         </div>
 
-        <!-- Task Title -->
-        <h2 class="text-2xl font-black text-slate-800 mt-4 mb-2 text-center">
-            {{ flashlight_task.title }}
-        </h2>
-        
-        <p class="text-sm text-slate-600 text-center mb-8 font-semibold">
-            Defeat this target to restore peace to the Guild.
-        </p>
+        <!-- Character/Waifu Area (Now brighter and more defined) -->
+        <div class="absolute bottom-[22%] left-1/2 -translate-x-1/2 w-64 h-80 z-0 flex flex-col items-center justify-end">
+            <!-- Glassmorphism character backdrop -->
+            <div class="w-full h-full bg-white/5 backdrop-blur-sm rounded-t-full border border-white/10 flex items-center justify-center relative overflow-hidden">
+                <div class="absolute bottom-0 w-full h-1/2 bg-gradient-to-t from-emerald-900/40 to-transparent"></div>
+                <div class="text-center z-10">
+                    <svg class="w-12 h-12 text-white/30 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"></path></svg>
+                    <span class="text-white/50 text-xs font-bold tracking-widest uppercase">Insert Waifu<br/>Here</span>
+                </div>
+            </div>
+        </div>
 
-        <!-- The Action Buttons (Keep your existing form here!) -->
-        <form method="POST" action="{% url 'update_task' %}" class="flex gap-4 w-full">
-            {% csrf_token %}
-            <input type="hidden" name="task_id" value="{{flashlight_task.id}}">
+        <!-- The Front Counter (Sleek, Modern Fantasy) -->
+        <div class="h-[24%] w-full z-10 relative flex flex-col items-center pt-6 shadow-[0_-20px_40px_rgba(0,0,0,0.8)]" style="background: linear-gradient(180deg, #2c1810 0%, #1a0e09 100%); border-top: 2px solid rgba(250, 204, 21, 0.3);">
             
-            <!-- Notice the hover:scale-105 animation on the buttons! -->
-            <button class="flex-1 bg-sky-500 hover:bg-sky-400 text-white font-bold py-3 rounded-xl shadow-lg transition-transform hover:scale-105" type="submit" name="action" value="complete">
-              ⚔️ Defeat
-            </button>
-            <button class="flex-1 bg-white border-2 border-red-400 text-red-500 hover:bg-red-50 font-bold py-3 rounded-xl shadow-sm transition-transform hover:scale-105" type="submit" name="action" value="skip">
-              🏃 Retreat
-            </button>
-        </form>
-
-    </div>
-    {% else %}
-        <!-- What to show when there are no tasks -->
-        <div class="w-full max-w-md backdrop-blur-md bg-white/40 border-2 border-dashed border-sky-300 rounded-3xl p-10 text-center">
-            <h2 class="text-2xl font-black text-slate-700 mb-2">Guild is Quiet</h2>
-            <p class="text-slate-500">No targets match your current HP. Rest, Hero!</p>
+            <!-- Modern Glass Dialogue Box -->
+            <div class="w-10/12 glass-panel p-5 rounded-xl relative mt-2 hover:scale-[1.02] transition-transform cursor-pointer">
+                <!-- Dialogue Tail -->
+                <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-5 h-5 bg-[#190f0a] border-t border-l border-yellow-400/20 rotate-45 backdrop-blur-md"></div>
+                
+                <p class="text-sm font-semibold text-yellow-50/90 text-center leading-relaxed">
+                    <span class="text-yellow-400 font-bold">"</span>Welcome back, Guild Master. I've filtered the board to match your current stamina. What's our next move?<span class="text-yellow-400 font-bold">"</span>
+                </p>
+            </div>
         </div>
-    {% endif %}
+    </div>
 
-</div>
-{% endblock %}
+
+    <!-- ==========================================
+         RIGHT PANEL: THE QUEST BOARD (70%)
+    =========================================== -->
+    <div class="w-[70%] h-full relative modern-wood-board p-8 flex flex-col items-center justify-center z-0 overflow-hidden">
+        
+        <!-- FLOATING PARTICLES (Adds Life/Movement) -->
+        <div class="particle w-2 h-2 top-[60%] left-[20%]" style="animation: drift 7s infinite linear;"></div>
+        <div class="particle w-1.5 h-1.5 top-[80%] left-[50%]" style="animation: drift 5s infinite linear 2s;"></div>
+        <div class="particle w-2.5 h-2.5 top-[70%] left-[80%]" style="animation: drift 8s infinite linear 4s;"></div>
+        <div class="particle w-1 h-1 top-[50%] left-[30%]" style="animation: drift 6s infinite linear 1s;"></div>
+
+        <!-- BACKGROUND CLUTTER (Fixes "Barren" feeling) -->
+        <!-- These represent other quests that are "hidden" by the flashlight feature -->
+        <div class="absolute top-[15%] left-[10%] w-48 h-64 bg-stone-900/40 border border-stone-700/30 rounded rotate-[-12deg] blur-[2px] pointer-events-none flex flex-col p-4 opacity-40">
+            <div class="w-full h-24 bg-stone-800/50 rounded mb-2"></div>
+            <div class="w-3/4 h-3 bg-stone-800/50 rounded mb-2"></div>
+            <div class="w-1/2 h-3 bg-stone-800/50 rounded"></div>
+        </div>
+        <div class="absolute bottom-[10%] right-[15%] w-56 h-72 bg-stone-900/40 border border-stone-700/30 rounded rotate-[8deg] blur-[2px] pointer-events-none flex flex-col p-4 opacity-40">
+            <div class="absolute -top-2 left-1/2 w-4 h-4 rounded-full bg-stone-800 shadow-md"></div>
+            <div class="w-full h-32 bg-stone-800/50 rounded mb-2 mt-2"></div>
+            <div class="w-full h-3 bg-stone-800/50 rounded mb-2"></div>
+        </div>
+        <div class="absolute top-[20%] right-[5%] w-40 h-56 bg-stone-900/30 border border-stone-700/30 rounded rotate-[25deg] blur-[3px] pointer-events-none opacity-30"></div>
+
+        
+        <!-- Top Right Glass Stats Badge -->
+        <div class="absolute top-6 right-8 glass-panel rounded-lg flex items-center overflow-hidden z-20">
+            <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 px-4 py-3 flex items-center justify-center text-stone-900">
+                <svg class="w-5 h-5 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
+            </div>
+            <div class="px-5 py-2 font-fantasy font-bold tracking-widest text-sm text-yellow-50">
+                Bounties Cleared: <span class="text-yellow-400 text-xl ml-2 font-black drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]">0</span>
+            </div>
+        </div>
+
+        <!-- THE CENTRAL FOCUS CARD (The Single Flashlight Task) -->
+        <div class="modern-card w-full max-w-[28rem] aspect-[3/4] relative p-6 flex flex-col z-10 group">
+            
+            <!-- Glowing Magic Pushpin -->
+            <div class="absolute -top-3 left-1/2 -translate-x-1/2 w-6 h-6 rounded-full magic-pin shadow-lg z-20"></div>
+
+            <!-- Header & Rank Badge -->
+            <div class="w-full flex justify-between items-center mb-5 mt-2">
+                <h2 class="font-fantasy text-2xl font-black text-stone-900 tracking-wider">TARGET ACQUIRED</h2>
+                
+                <!-- Modern Rank Badge -->
+                <div class="bg-gradient-to-br from-red-600 to-red-900 text-white font-black px-4 py-1.5 rounded flex items-center gap-2 shadow-[0_4px_10px_rgba(220,38,38,0.4)] border border-red-400/50">
+                    <span class="text-[0.65rem] opacity-90 uppercase tracking-widest font-sans">Rank</span>
+                    <span class="text-xl font-fantasy text-yellow-300 drop-shadow-md">A</span>
+                </div>
+            </div>
+
+            <!-- 70-80% Image Area (Sleek Modern Frame) -->
+            <div class="w-full flex-grow bg-stone-100 rounded-lg border-2 border-stone-200 shadow-inner flex flex-col items-center justify-center overflow-hidden relative group-hover:border-yellow-400/50 transition-colors duration-500 p-1">
+                
+                <!-- Image Placeholder Inner -->
+                <div class="w-full h-full bg-stone-900 rounded flex flex-col items-center justify-center relative overflow-hidden group-hover:shadow-[inset_0_0_30px_rgba(250,204,21,0.1)] transition-all">
+                    <!-- Tech/Magic grid overlay -->
+                    <div class="absolute inset-0 bg-[linear-gradient(rgba(255,255,255,0.03)_1px,transparent_1px),linear-gradient(90deg,rgba(255,255,255,0.03)_1px,transparent_1px)] bg-[size:20px_20px] pointer-events-none"></div>
+                    
+                    <img src="{% static 'planner/rank_'|add:flashlight_task.threat|stringformat:'s'|add:'.jpg' %}" class="absolute inset-0 w-full h-full object-cover z-10" alt="Bounty Target">
+                </div>
+            </div>
+
+            <!-- Quest Title & Stats -->
+            <div class="w-full mt-6 text-center">
+                <h3 class="font-bold text-2xl text-stone-900 font-sans tracking-tight">Defeat the Python Script</h3>
+                <div class="flex items-center justify-center gap-3 mt-2">
+                    <span class="w-10 h-[2px] bg-emerald-500/30 rounded-full"></span>
+                    <p class="text-xs text-emerald-700 font-bold tracking-widest uppercase bg-emerald-100 px-3 py-1 rounded-full">High Stamina Cost</p>
+                    <span class="w-10 h-[2px] bg-emerald-500/30 rounded-full"></span>
+                </div>
+            </div>
+
+            <!-- Modern Action Buttons -->
+            <div class="w-full mt-6 flex gap-3">
+                <button class="flex-1 btn-modern btn-accept py-3.5 px-4 text-sm font-black tracking-widest">Accept Quest</button>
+                <button class="flex-1 btn-modern btn-retreat py-3.5 px-4 text-sm font-black tracking-widest">Retreat</button>
+            </div>
+
+        </div>
+    </div>
+
+</body>
+</html> 
