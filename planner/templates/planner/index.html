@@ -1,131 +1,8 @@
-<!-- templates/planner/index.html -->
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Project Cortex - Modern Adventurer's Guild</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700;800&family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
-    
-    <style>
-        :root {
-            --parchment: #FDFBF7;
-            --modern-gold: #FACC15;
-            --magic-glow: rgba(250, 204, 21, 0.4);
-            --guild-green: #059669;
-        }
-        
-        body {
-            font-family: 'Nunito', sans-serif;
-            background-color: #1a120b;
-        }
+{% extends 'planner/layout.html' %}
 
-        .font-fantasy { font-family: 'Cinzel', serif; }
+{% load static %}
 
-        /* --- ANIMATIONS FOR "LIFE" --- */
-        @keyframes float {
-            0% { transform: translateY(0px) rotate(-1deg); }
-            50% { transform: translateY(-8px) rotate(-0.5deg); }
-            100% { transform: translateY(0px) rotate(-1deg); }
-        }
-        @keyframes pulse-glow {
-            0% { box-shadow: 0 0 15px var(--magic-glow); }
-            50% { box-shadow: 0 0 30px rgba(250, 204, 21, 0.8); }
-            100% { box-shadow: 0 0 15px var(--magic-glow); }
-        }
-        @keyframes drift {
-            0% { transform: translateY(0) translateX(0) scale(1); opacity: 0; }
-            20% { opacity: 0.8; }
-            80% { opacity: 0.5; }
-            100% { transform: translateY(-150px) translateX(30px) scale(0.5); opacity: 0; }
-        }
-
-        /* --- MODERN FANTASY STYLING --- */
-        
-        /* Vibrant, warm wood with a magical spotlight */
-        .modern-wood-board {
-            background-color: #3e2211;
-            background-image: 
-                radial-gradient(circle at 50% 40%, rgba(250, 204, 21, 0.15) 0%, transparent 60%),
-                repeating-linear-gradient(to right, transparent, transparent 60px, rgba(0,0,0,0.2) 60px, rgba(0,0,0,0.2) 62px);
-            box-shadow: inset 0 0 120px rgba(0, 0, 0, 0.8);
-        }
-
-        /* Glassmorphism UI Elements */
-        .glass-panel {
-            background: rgba(25, 15, 10, 0.65);
-            backdrop-filter: blur(12px);
-            -webkit-backdrop-filter: blur(12px);
-            border: 1px solid rgba(250, 204, 21, 0.2);
-            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
-        }
-
-        /* The Main Focus Card - Clean, Bright, Modern */
-        .modern-card {
-            background: var(--parchment);
-            border-radius: 12px;
-            box-shadow: 
-                0 25px 50px -12px rgba(0, 0, 0, 0.7),
-                0 0 0 1px rgba(250, 204, 21, 0.3),
-                0 0 30px rgba(250, 204, 21, 0.1);
-            animation: float 6s ease-in-out infinite;
-        }
-
-        /* Modern Gradient Buttons */
-        .btn-modern {
-            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-            text-transform: uppercase;
-            letter-spacing: 0.1em;
-            font-family: 'Nunito', sans-serif;
-            font-weight: 800;
-            border-radius: 8px;
-            position: relative;
-            overflow: hidden;
-        }
-        .btn-modern::after {
-            content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
-            transition: 0.5s;
-        }
-        .btn-modern:hover::after { left: 100%; }
-        
-        .btn-accept {
-            background: linear-gradient(135deg, #10B981 0%, #047857 100%);
-            border: 1px solid #34D399;
-            color: white;
-            box-shadow: 0 4px 15px rgba(5, 150, 105, 0.4);
-        }
-        .btn-accept:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(5, 150, 105, 0.6); }
-        
-        .btn-retreat {
-            background: linear-gradient(135deg, #3F3F46 0%, #18181B 100%);
-            border: 1px solid #71717A;
-            color: #E4E4E7;
-            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.4);
-        }
-        .btn-retreat:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(0, 0, 0, 0.6); }
-
-        /* Glowing Crystal Pushpin */
-        .magic-pin {
-            background: radial-gradient(circle at 30% 30%, #FEF08A 0%, #EAB308 50%, #A16207 100%);
-            animation: pulse-glow 3s infinite;
-            border: 2px solid #FEF08A;
-        }
-
-        /* Floating Particles setup */
-        .particle {
-            position: absolute;
-            background: #FACC15;
-            border-radius: 50%;
-            pointer-events: none;
-            filter: blur(2px);
-            box-shadow: 0 0 10px #FACC15, 0 0 20px #FACC15;
-        }
-    </style>
-</head>
-<body class="h-screen w-full flex overflow-hidden text-stone-800 antialiased">
-
+{% block body %}
     <!-- ==========================================
          LEFT PANEL: THE GUILD RECEPTION (30%)
     =========================================== -->
@@ -258,5 +135,5 @@
         </div>
     </div>
 
-</body>
-</html> 
+
+{% endblock %}
