@@ -83,10 +83,12 @@
                 <svg class="w-5 h-5 drop-shadow-sm" fill="currentColor" viewBox="0 0 20 20"><path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"></path><path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm3 4a1 1 0 000 2h.01a1 1 0 100-2H7zm3 0a1 1 0 000 2h3a1 1 0 100-2h-3zm-3 4a1 1 0 100 2h.01a1 1 0 100-2H7zm3 0a1 1 0 100 2h3a1 1 0 100-2h-3z" clip-rule="evenodd"></path></svg>
             </div>
             <div class="px-5 py-2 font-fantasy font-bold tracking-widest text-sm text-yellow-50">
-                Bounties Cleared: <span class="text-yellow-400 text-xl ml-2 font-black drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]">0</span>
+                Bounties Cleared: <span class="text-yellow-400 text-xl ml-2 font-black drop-shadow-[0_0_5px_rgba(250,204,21,0.5)]">{{ cleared_count }}</span>
             </div>
         </div>
 
+
+        {% if flashlight_task %}
         <!-- THE CENTRAL FOCUS CARD (The Single Flashlight Task) -->
         <div class="modern-card w-full max-w-[28rem] aspect-[3/4] relative p-6 flex flex-col z-10 group">
             
@@ -100,7 +102,7 @@
                 <!-- Modern Rank Badge -->
                 <div class="bg-gradient-to-br from-red-600 to-red-900 text-white font-black px-4 py-1.5 rounded flex items-center gap-2 shadow-[0_4px_10px_rgba(220,38,38,0.4)] border border-red-400/50">
                     <span class="text-[0.65rem] opacity-90 uppercase tracking-widest font-sans">Rank</span>
-                    <span class="text-xl font-fantasy text-yellow-300 drop-shadow-md">A</span>
+                    <span class="text-xl font-fantasy text-yellow-300 drop-shadow-md">{{ flashlight_task.get_threat_display }}</span>
                 </div>
             </div>
 
@@ -118,7 +120,7 @@
 
             <!-- Quest Title & Stats -->
             <div class="w-full mt-6 text-center">
-                <h3 class="font-bold text-2xl text-stone-900 font-sans tracking-tight">Defeat the Python Script</h3>
+                <h3 class="font-bold text-2xl text-stone-900 font-sans tracking-tight">{{ flashlight_task.title }}</h3>
                 <div class="flex items-center justify-center gap-3 mt-2">
                     <span class="w-10 h-[2px] bg-emerald-500/30 rounded-full"></span>
                     <p class="text-xs text-emerald-700 font-bold tracking-widest uppercase bg-emerald-100 px-3 py-1 rounded-full">High Stamina Cost</p>
@@ -127,10 +129,24 @@
             </div>
 
             <!-- Modern Action Buttons -->
-            <div class="w-full mt-6 flex gap-3">
-                <button class="flex-1 btn-modern btn-accept py-3.5 px-4 text-sm font-black tracking-widest">Accept Quest</button>
-                <button class="flex-1 btn-modern btn-retreat py-3.5 px-4 text-sm font-black tracking-widest">Retreat</button>
-            </div>
+            <form method="POST" action="{% url 'update_task' %}" class="w-full mt-6 flex gap-3">
+                {% csrf_token %}
+                <input type="hidden" name="task_id" value="{{ flashlight_task.id }}">
+                <button type="submit" name="action" value="complete" class="flex-1 btn-modern btn-accept py-3.5 px-4 text-sm font-black tracking-widest">Defeat</button>
+                <button type="submit" name="action" value="skip" class="flex-1 btn-modern btn-retreat py-3.5 px-4 text-sm font-black tracking-widest">Retreat</button>
+            </form>
+
+            {% else %}
+                <div class="w-full mt-6 text-center">
+                <h3 class="font-bold text-2xl text-stone-900 font-sans tracking-tight">No Active Bounties</h3>
+                    <div class="flex items-center justify-center gap-3 mt-2">
+                        <span class="w-10 h-[2px] bg-emerald-500/30 rounded-full"></span>
+                        <p class="text-xs text-emerald-700 font-bold tracking-widest uppercase bg-emerald-100 px-3 py-1 rounded-full">High Stamina Cost</p>
+                        <span class="w-10 h-[2px] bg-emerald-500/30 rounded-full"></span>
+                    </div>
+                </div>
+
+            {% endif %}
 
         </div>
     </div>
