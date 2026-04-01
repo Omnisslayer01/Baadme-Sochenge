@@ -2,6 +2,9 @@ from django.shortcuts import render
 from .models import User_state,Vault_Goal,Micro_task
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
+import os
+import google.generativeai as genai
+from dotenv import load_dotenv
 
 @login_required
 def flashlight_tasks(request):
@@ -45,6 +48,16 @@ def update_task(request):
                 task.status = "intervention"
         task.save()
     return redirect('home')
+
+
+@login_required
+def waifu_chat(request):
+    load_dotenv()
+    genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
+    if request.method =='POST':
+        
+
+
 
 
 
