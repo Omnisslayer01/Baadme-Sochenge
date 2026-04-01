@@ -53,7 +53,7 @@ def update_task(request):
         task.save()
     return redirect('home')
 
-
+@login_required
 def waifu_chat(request):
     if request.method =='POST':
         users_response=request.POST.get('user_message')
