@@ -10,6 +10,7 @@ from dotenv import load_dotenv
 load_dotenv()
 genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
 
+
 @login_required
 def flashlight_tasks(request):
     
@@ -39,7 +40,6 @@ def flashlight_tasks(request):
     )
 @login_required
 def update_task(request):
-    
     if request.method == 'POST':
         task_id = request.POST.get('task_id')
         action = request.POST.get('action')
@@ -54,11 +54,13 @@ def update_task(request):
     return redirect('home')
 
 
-@login_required
 def waifu_chat(request):
     if request.method =='POST':
         users_response=request.POST.get('user_message')
-        
+        print(f'The User said {users_response}')
+        return redirect('home')
+
+
 
 
 
