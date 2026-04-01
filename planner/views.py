@@ -30,6 +30,7 @@ def flashlight_tasks(request):
         taskcost = flashlighttask.threat 
 
     cleared_count = Micro_task.objects.filter(parent_goal__user=user,status="defeated").count()
+    waifu_message = request.session.get('waifu_message', "Welcome back, Guild Master! Let's clear some bounties.")
     return render(request, 'planner/index.html',{
         'flashlight_task':flashlighttask,
         'filtered_tasks':microtask, 
@@ -55,9 +56,20 @@ def update_task(request):
 
 @login_required
 def waifu_chat(request):
-    if request.method =='POST':
-        users_response=request.POST.get('user_message')
-        print(f'The User said {users_response}')
+    if request.method == 'POST':
+        users_response = request.POST.get('user_response') 
+        
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        prompt = f"""
+        Act as a cheerful, empathetic Anime Guild Receptionist. 
+        The Guild Master (Hero) just said: "{users_response}"
+        Respond in character in 2 short sentences. Be encouraging!
+        """
+        response = model.generate_content(prompt)
+        ai_reply = response.text
+    
+        request.session['waifu_message'] = ai_reply
+        
         return redirect('home')
 
 
