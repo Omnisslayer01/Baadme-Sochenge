@@ -59,7 +59,7 @@ def waifu_chat(request):
     if request.method == 'POST':
         users_response = request.POST.get('user_response') 
         
-        model = genai.GenerativeModel('gemini-1.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash-latest')
         prompt = f"""
         Act as a cheerful, empathetic Anime Guild Receptionist. 
         The Guild Master (Hero) just said: "{users_response}"
@@ -71,6 +71,7 @@ def waifu_chat(request):
         request.session['waifu_message'] = ai_reply
         
         return redirect('home')
+    return render(request, 'planner/voice.html')
 
 
 
