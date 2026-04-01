@@ -3,12 +3,11 @@ from .models import User_state,Vault_Goal,Micro_task
 from django.shortcuts import redirect
 from django.contrib.auth.decorators import login_required
 import os
-import google.generativeai as genai
+from google import genai
 from dotenv import load_dotenv
 
 
 load_dotenv()
-genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
 
 
 @login_required
@@ -27,10 +26,6 @@ def flashlight_tasks(request):
         taskcost = 0
     else :
         taskcost = flashlighttask.threat
-    
-    if request.method=='POST':
-        waifu_message=request.session.get('waifu_message','Welcome Back Guild Master, lets clear some Bounties')
-
     cleared_count = Micro_task.objects.filter(parent_goal__user=user,status="defeated").count()
     waifu_message = request.session.get('waifu_message', "Welcome back, Guild Master! Let's clear some bounties.")
     return render(request, 'planner/index.html',{
@@ -61,14 +56,16 @@ def update_task(request):
 def waifu_chat(request):
     if request.method == 'POST':
         users_response = request.POST.get('user_response') 
-        
-        model = genai.GenerativeModel('gemini-1.5-flash-latest')
-        prompt = f"""
-        Act as a cheerful, empathetic Anime Guild Receptionist. 
-        The Guild Master (Hero) just said: "{users_response}"
-        Respond in character in 2 short sentences. Be encouraging!
-        """
-        response = model.generate_content(prompt)
+        client = genai.Client()
+
+        response = client.models.generate_content(
+            model="gemini-3-flash-preview", 
+            contents=f"""
+                        Act as a cheerful, empathetic Anime Guild Receptionist. 
+                        The Guild Master (Hero) just said: "{users_response}"
+                        Respond in character in 2 short sentences. Be encouraging!
+                    """
+        )
         ai_reply = response.text
     
         request.session['waifu_message'] = ai_reply
