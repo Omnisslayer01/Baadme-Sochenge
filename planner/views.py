@@ -6,6 +6,10 @@ import os
 import google.generativeai as genai
 from dotenv import load_dotenv
 
+
+load_dotenv()
+genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
+
 @login_required
 def flashlight_tasks(request):
     
@@ -52,10 +56,10 @@ def update_task(request):
 
 @login_required
 def waifu_chat(request):
-    load_dotenv()
-    genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
     if request.method =='POST':
+        users_response=request.POST.get('user_message')
         
+
 
 
 
