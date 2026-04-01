@@ -1,0 +1,12 @@
+{% extends 'planner/layout.html' %}
+
+{% load static %}
+
+{% block body %}
+
+<form method="POST" action="{% url 'user_response' %}"></form>
+{% csrf_token %}
+ <input type="text" name="reply">
+ <button type="submit" name="submit"></button>
+
+{% endblock %}
