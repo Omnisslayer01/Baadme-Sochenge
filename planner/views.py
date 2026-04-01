@@ -13,7 +13,6 @@ genai.configure(api_key=os.environ.get('GEMINI_API_KEY'))
 
 @login_required
 def flashlight_tasks(request):
-    
     user=request.user
     user_state=User_state.objects.get(user=user)
     user_stamina=user_state.current_stamina
@@ -27,7 +26,10 @@ def flashlight_tasks(request):
     if flashlighttask == None:
         taskcost = 0
     else :
-        taskcost = flashlighttask.threat 
+        taskcost = flashlighttask.threat
+    
+    if request.method=='POST':
+        waifu_message=request.session.get('waifu_message','Welcome Back Guild Master, lets clear some Bounties')
 
     cleared_count = Micro_task.objects.filter(parent_goal__user=user,status="defeated").count()
     waifu_message = request.session.get('waifu_message', "Welcome back, Guild Master! Let's clear some bounties.")
@@ -36,6 +38,7 @@ def flashlight_tasks(request):
         'filtered_tasks':microtask, 
         'task_cost': taskcost, 
         'cleared_count': cleared_count,
+        'waifu_message':waifu_message
         
     }
     )
