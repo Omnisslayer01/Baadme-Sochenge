@@ -22,12 +22,13 @@ class Vault_Goal(models.Model):
     title = models.CharField(max_length=64)
     is_active = models.BooleanField(default=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    soft_deadline = models.DateTimeField(null=True , blank= True)
 
     def __str__(self):
-        return f'{self.user} created {self.title} {self.created_at} is_active={self.is_active}'
+        return f'{self.user} created {self.title} {self.created_at} is_active={self.is_active} having deadline {self.soft_deadline}'
 
 class Micro_task(models.Model):
-    parent_goal = models.ForeignKey(Vault_Goal , on_delete=models.CASCADE)
+    parent_goal = models.ForeignKey(Vault_Goal , on_delete=models.CASCADE, related_name='micro_tasks')
     title = models.CharField(max_length=64)
     threat = models.IntegerField(choices=ThreatLevel.choices)
     skip_count = models.IntegerField(default=0)
@@ -39,10 +40,9 @@ class Micro_task(models.Model):
     ('intervention','Intervention')
     ]
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='bounty_board')
-    soft_deadline = models.DateTimeField(null=True , blank= True)
 
     def __str__(self):
-        return f'{self.title} is a {self.get_threat_display()} Mission and has status={self.status} having deadline {self.soft_deadline}'
+        return f'{self.title} is a {self.get_threat_display()} Mission and has status={self.status}'
 
 
 class ConversationLog(models.Model):

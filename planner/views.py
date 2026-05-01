@@ -6,6 +6,7 @@ from django.contrib.auth.decorators import login_required
 from google import genai
 from dotenv import load_dotenv
 import json
+import sys
 
 load_dotenv()
 
@@ -21,6 +22,7 @@ def flashlight_tasks(request):
         )
     flashlighttask=microtask.first()
     
+
     if flashlighttask == None:
         taskcost = 0
     else :
@@ -33,7 +35,6 @@ def flashlight_tasks(request):
         'task_cost': taskcost, 
         'cleared_count': cleared_count,
         'waifu_message':waifu_message
-        
     }
     )
 @login_required
@@ -59,17 +60,45 @@ def waifu_chat(request):
 
     if request.method == 'POST':
         users_response = request.POST.get('user_message')
+
+        if not users_response or not users_response.strip():
+            return redirect('message_waifu')
+        
         ConversationLog.objects.create(
             user=user,
             sender='USER',
             message=users_response
         )
+
         print(f"{timezone.now()} {'USER'}: {users_response} \n")
+
         previous_log=list(ConversationLog.objects.filter(user=user).order_by('-timestamp')[:10])
         previous_log.reverse()
+
         history_log=""
         for log in previous_log:
-            history_log+=f"{log.timestamp} {log.sender}: {log.message} \n"
+            history_log+=f"{log.timestamp} {log.sender} : {log.message} \n"
+        
+        active_microtasks=Micro_task.objects.filter(parent_goal__user=user, status__in=['active_hunt','bounty_board','tactical_retreat','intervention'])
+        dict_of_tasks=[]
+        for task in active_microtasks:
+            dict_of_tasks.append({
+                'id':task.id,
+                'parent_goal':task.parent_goal.title,
+                'title':task.title,
+                'threat_level': task.threat,
+                'skip_count':task.skip_count,
+                'status':task.status
+            })
+
+        all_vault_goals=Vault_Goal.objects.filter(user=user, is_active=True)
+        result={}
+        for goal in all_vault_goals:
+            tasks = goal.micro_tasks.filter(
+                status__in=['active_hunt','bounty_board','tactical_retreat','intervention']
+            )
+            result[goal.title]=list(tasks)
+        
 
         client = genai.Client()
         prompt = f"""
@@ -114,9 +143,18 @@ Your tone is raw, direct, and completely non-judgmental. You do not care about p
 
 **Current Objective:** Keep the chain alive. Do not let the user build a mountain. Just make them take the next step.
 "End every interaction with a 'Flashlight Plan' (Next 1-2 hours only) and an immediate command. Instruct the user to report back when the specific command is finished."
+Below are the tasks from which you can assign to me, along with the title I have mentioned the parent_goal, the threat_level, skip_count and the status, all the tasks mentioned are less than equal to current user_stamina.
+{dict_of_tasks}
+**YOUR LOGICAL DIRECTIVE (DO THIS IN ORDER):**
+        1. Analyze what the user just said. If they are tired, lower their Stamina (10 or 20). If energized, raise it (40 or 50).
+        2. Look at the Bounty Board. 
+        3. You MUST ONLY recommend a task where the `threat_level` is LESS THAN OR EQUAL TO the new Stamina you just decided on. If they are at 10 Stamina, DO NOT recommend a 30 Stamina task.
+    
+    
 
 The system ends here now below is the converstation history between you(AI) and the User
         {history_log}
+
 
 Now below are the tasks you are actually supposed to do:
         The User currently has {user_stamina} out of 50 Stamina.
