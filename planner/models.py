@@ -1,6 +1,6 @@
 from django.db import models
 from django.contrib.auth.models import User
-
+from django.utils import timezone
 
 class ThreatLevel(models.IntegerChoices):
     D_Rank_Mission=10,'D-Rank'
@@ -8,7 +8,6 @@ class ThreatLevel(models.IntegerChoices):
     B_Rank_Mission=30,'B-Rank'
     A_Rank_Mission=40,'A-Rank'
     S_Rank_Mission=50,'S-Rank'
-
 
 class User_state(models.Model):
     user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -46,6 +45,16 @@ class Micro_task(models.Model):
         return f'{self.title} is a {self.get_threat_display()} Mission and has status={self.status} having deadline {self.soft_deadline}'
 
 
+class ConversationLog(models.Model):
+    user=models.ForeignKey(User, on_delete=models.CASCADE, related_name='conversation_logs')
+    sender=models.CharField(max_length=10,choices=[('USER','User'),('AI','AI')],default='USER')
+    message=models.TextField(default='empty')
+    timestamp=models.DateTimeField(default=timezone.now)
 
+    class Meta:
+        ordering=['timestamp']
+    
+    def __str__(self):
+        return f'{self.sender} ({self.timestamp.strftime("%Y-%m-%d %H:%M")}): {self.message[:50]}...'
     
 
