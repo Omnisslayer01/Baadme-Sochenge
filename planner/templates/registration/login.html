@@ -1,0 +1,42 @@
+<!-- plans/templates/registration/login.html -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Guild Login</title>
+</head>
+<body style="background-color: #1a120b; color: #FDFBF7; font-family: sans-serif; display: flex; justify-content: center; align-items: center; height: 100vh;">
+
+    <div style="background-color: #2c1a0f; padding: 40px; border-radius: 8px; border: 2px solid #FACC15;">
+        <h2 style="color: #FACC15; text-align: center; margin-top: 0;">Enter the Guild</h2>
+        
+        <!-- If they type the wrong password, Django sends an error here -->
+        {% if form.errors %}
+            <p style="color: red;">Your username and password didn't match. Please try again.</p>
+        {% endif %}
+
+        <!-- The actual form -->
+        <form method="post" action="{% url 'login' %}">
+            {% csrf_token %}
+            
+            <div style="margin-bottom: 15px;">
+                {{ form.username.label_tag }}<br>
+                {{ form.username }}
+            </div>
+            <div style="margin-bottom: 20px;">
+                {{ form.password.label_tag }}<br>
+                {{ form.password }}
+            </div>
+
+            <button type="submit" style="background-color: #10B981; color: white; padding: 10px 20px; border: none; border-radius: 4px; cursor: pointer; width: 100%; font-weight: bold;">
+                Login
+            </button>
+            
+            <!-- This hidden input tells Django where to send the user next -->
+            <input type="hidden" name="next" value="{{ next }}">
+        </form>
+    </div>
+
+</body>
+</html>
