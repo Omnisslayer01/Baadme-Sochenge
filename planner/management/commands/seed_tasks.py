@@ -22,7 +22,8 @@ class Command(BaseCommand):
             goal = Vault_Goal.objects.create(
                 user=random.choice(users),
                 title=fake.sentence(nb_words=3),
-                is_active=random.choice([True, False])
+                is_active=random.choice([True, False]),
+                soft_deadline=fake.date_time_between(start_date="now", end_date="+10d")
             )
             goals.append(goal)
 
@@ -36,7 +37,7 @@ class Command(BaseCommand):
                 threat=random.choice(threats),
                 skip_count=random.randint(0, 5),
                 status=random.choice([s[0] for s in Micro_task.STATUS_CHOICES]),
-                soft_deadline=fake.date_time_between(start_date="now", end_date="+10d")
+                
             )
 
         self.stdout.write(self.style.SUCCESS("✅ Fake data generated successfully!"))
