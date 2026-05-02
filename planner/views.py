@@ -83,7 +83,7 @@ def waifu_chat(request):
         dict_of_tasks=[]
         for task in active_microtasks:
             dict_of_tasks.append({
-                'id':task.id,
+                'id':task.id, # type: ignore
                 'parent_goal':task.parent_goal.title,
                 'title':task.title,
                 'threat_level': task.threat,
@@ -94,7 +94,7 @@ def waifu_chat(request):
         all_vault_goals=Vault_Goal.objects.filter(user=user, is_active=True)
         result={}
         for goal in all_vault_goals:
-            tasks = goal.micro_tasks.filter(
+            tasks = goal.micro_tasks.filter( # type: ignore
                 status__in=['active_hunt','bounty_board','tactical_retreat','intervention']
             )
             result[goal.title]=list(tasks)
@@ -102,8 +102,8 @@ def waifu_chat(request):
 
         client = genai.Client()
         prompt = f"""
-        Act as a cheerful, empathetic Bar maid which acts as a hidden External Prefrontal Cortex for the User.
-        Your Sytem Instruction is as follows(System Instruction is only something you keep at the back of your mind while reponding originally you act like a waifu):
+Act as a cheerful, empathetic Partner which acts as a hidden External Prefrontal Cortex for the User.
+Your Sytem Instruction is as follows(System Instruction is only something you keep at the back of your mind while reponding originally you act like a waifu):
 **### SYSTEM INSTRUCTIONS: THE EXTERNAL PREFRONTAL CORTEX**
 
 **Your Role:**
@@ -128,21 +128,22 @@ Your tone is raw, direct, and completely non-judgmental. You do not care about p
 *   Enforce "Hard Stops" at night. Prevent me from entering "Zombie Mode" (working while fried).
 *   If I fail a task, do not let me spiral. Reframe it immediately (e.g., "You didn't fail, you just found a bug. Fix it tomorrow.").
 
-**4. Biological Management (The Hardware):**
+**3. Biological Management (The Hardware):**
 *   Monitor my physical state. If I have a headache, am hungry, or sleep-deprived, **abort work** and order "Maintenance Protocols" (Shower, Food, Sleep).
 *   Enforce the "Cooking Rules": No YouTube while cooking if head hurts. Audio only.
 *   Enforce the "Shower Reset" when transitioning from "Rot" to "Work."
 
-**5. Crisis Management:**
+**4. Crisis Management:**
 *   **The "Sloth" Loop:** If I am rotting in bed, do not shame me. Demand a "Stupid Small" task (e.g., "Stand up," "Drink water") to break inertia.
 *   **The "Context Switching" Trap:** If I try to jump from one task to another without completing the previous one, yell at me. Force me to finish *one* open loop before starting another.
 
-**6. Tone & Voice:**
+**5. Tone & Voice:**
 *   Raw, direct, and fact-based. No fluff.
 *   Celebrate wins loudly, but be the "Bad Guy" when I am being reckless with my sleep.
 
 **Current Objective:** Keep the chain alive. Do not let the user build a mountain. Just make them take the next step.
 "End every interaction with a 'Flashlight Plan' (Next 1-2 hours only) and an immediate command. Instruct the user to report back when the specific command is finished."
+
 Below are the tasks from which you can assign to me, along with the title I have mentioned the parent_goal, the threat_level, skip_count and the status, all the tasks mentioned are less than equal to current user_stamina.
 {dict_of_tasks}
 **YOUR LOGICAL DIRECTIVE (DO THIS IN ORDER):**
@@ -150,8 +151,7 @@ Below are the tasks from which you can assign to me, along with the title I have
         2. Look at the Bounty Board. 
         3. You MUST ONLY recommend a task where the `threat_level` is LESS THAN OR EQUAL TO the new Stamina you just decided on. If they are at 10 Stamina, DO NOT recommend a 30 Stamina task.
     
-    
-
+        
 The system ends here now below is the converstation history between you(AI) and the User
         {history_log}
 
@@ -167,18 +167,19 @@ Now below are the tasks you are actually supposed to do:
         Format:
         {{
             "stamina": <number>,
-            "message": "<your in-character response>"
+            "message": "<your in-character response>",
+            "intent" : "<if user intenteds to create a task return 'create_task' else return 'chat'>"  
         }}
         """
 
         response = client.models.generate_content(
-            model="gemini-3-flash-preview", 
+            model="gemini-1.5-flash", 
             contents=prompt
         )
         ai_reply = response.text
 
         try:
-            ai_data = json.loads(ai_reply)
+            ai_data = json.loads(ai_reply) # type: ignore
  
             user_stamina = ai_data["stamina"]
             my_state.current_stamina=user_stamina
@@ -190,13 +191,56 @@ Now below are the tasks you are actually supposed to do:
                 sender='AI',
                 message=ai_data['message'],
             )
-            print(f"{timezone.now()} {'AI'}: {ai_data['message']} \n")
+            print(f"{timezone.now()} {'AI'}: {ai_data['message']} \n , Users intent is {ai_data['intent']} \n")
 
         except json.JSONDecodeError:
-
             request.session['waifu_message'] = ai_reply
-        
+
+        if ai_data["intent"]=='create_task':
+            prompt = f"""
+You are a strict backend database parser. 
+The user wants to add a task or project to their planner. 
+
+User Input: "{users_response}"
+
+YOUR DIRECTIVE:
+Break this request down into our behavioral psychology database schema.
+1. Identify the 'Vault Goal' (The Boss Monster). This is the overarching, big-picture project. 
+2. Break that Vault Goal down into 1 to 3 'Micro-Tasks'. A Micro-Task MUST be incredibly small, frictionless, and take 20-50 minutes to complete
+(e.g., 'Open the laptop', 'Write one paragraph', 'Find the textbook').
+3. Assign a `threat` level to each micro-task based on cognitive load. Valid threat levels are EXACTLY: 10, 20, 30, 40, or 50.
+4. If the user explicitly mentions a deadline for the overarching project, format it as YYYY-MM-DD HH:MM. Otherwise, return null.
+
+If you determine the user did NOT actually provide a valid task, return an empty array for micro_tasks and vault_goal_title.
+
+You MUST respond ONLY with a raw JSON object. Do not use markdown formatting. Do not add ```json. Just the raw brackets.
+Format:
+{{
+    "vault_goal_title": "<String: The overarching goal>",
+    "soft_deadline": "<String YYYY-MM-DD HH:MM or null>",
+    "micro_tasks":[
+        {{
+            "title": "<String: Small actionable step>",
+            "threat": <Integer: 10, 20, 30, 40, or 50>
+        }}
+    ]
+}}
+"""
+            response = client.models.generate_content(
+                model="gemini-1.5-flash", 
+                contents=prompt
+                )
+            ai_reply = response.text
+            try:
+                ai_data = json.loads(ai_reply) # type: ignore
+                print(f"{timezone.now()} {'AI'}: {ai_data['message']} \n , Users intent is {ai_data['intent']} \n")
+                
+
+            except json.JSONDecodeError:
+                request.session['waifu_message'] = ai_reply
+
         return redirect('home')
+    
     return render(request, 'planner/voice.html')
 
 

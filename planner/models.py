@@ -15,7 +15,7 @@ class User_state(models.Model):
     last_assessed=models.DateTimeField(auto_now=True )
 
     def __str__(self):
-        return f'{self.user} {self.last_assessed} is ready to do {self.get_current_stamina_display()} Missions.'
+        return f'{self.user} {self.last_assessed} is ready to do {self.get_current_stamina_display()} Missions.' # type: ignore
 
 class Vault_Goal(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -42,7 +42,7 @@ class Micro_task(models.Model):
     status = models.CharField(max_length=20, choices=STATUS_CHOICES, default='bounty_board')
 
     def __str__(self):
-        return f'{self.title} is a {self.get_threat_display()} Mission and has status={self.status}'
+        return f'{self.title} is a {self.get_threat_display()} Mission and has status={self.status}' # type: ignore
 
 
 class ConversationLog(models.Model):
