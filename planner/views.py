@@ -173,7 +173,7 @@ Now below are the tasks you are actually supposed to do:
         """
 
         response = client.models.generate_content(
-            model="gemini-1.5-flash", 
+            model="gemini-2.5-flash", 
             contents=prompt
         )
         ai_reply = response.text
@@ -227,7 +227,7 @@ Format:
 }}
 """
             response = client.models.generate_content(
-                model="gemini-1.5-flash", 
+                model="gemini-2.5-flash", 
                 contents=prompt
                 )
             ai_reply = response.text
