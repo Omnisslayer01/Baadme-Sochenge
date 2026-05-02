@@ -199,32 +199,72 @@ Now below are the tasks you are actually supposed to do:
         if ai_data["intent"]=='create_task':
             prompt = f"""
 You are a strict backend database parser. 
-The user wants to add a task or project to their planner. 
+Your job is to convert user input into a structured JSON format for storage.
 
 User Input: "{users_response}"
 
-YOUR DIRECTIVE:
-Break this request down into our behavioral psychology database schema.
-1. Identify the 'Vault Goal' (The Boss Monster). This is the overarching, big-picture project. 
-2. Break that Vault Goal down into 1 to 3 'Micro-Tasks'. A Micro-Task MUST be incredibly small, frictionless, and take 20-50 minutes to complete
-(e.g., 'Open the laptop', 'Write one paragraph', 'Find the textbook').
-3. Assign a `threat` level to each micro-task based on cognitive load. Valid threat levels are EXACTLY: 10, 20, 30, 40, or 50.
-4. If the user explicitly mentions a deadline for the overarching project, format it as YYYY-MM-DD HH:MM. Otherwise, return null.
+----------------------
+DEFINITIONS:
 
-If you determine the user did NOT actually provide a valid task, return an empty array for micro_tasks and vault_goal_title.
+Vault Goal:
+- A high-level, meaningful objective (e.g., "Get Fit", "Study DSA")
 
-You MUST respond ONLY with a raw JSON object. Do not use markdown formatting. Do not add ```json. Just the raw brackets.
-Format:
-{{
-    "vault_goal_title": "<String: The overarching goal>",
-    "soft_deadline": "<String YYYY-MM-DD HH:MM or null>",
-    "micro_tasks":[
-        {{
-            "title": "<String: Small actionable step>",
-            "threat": <Integer: 10, 20, 30, 40, or 50>
-        }}
-    ]
-}}
+Micro Task:
+- A small, specific, actionable step
+- Must take approximately 20–50 minutes
+- Must be realistic and immediately doable
+
+----------------------
+RULES:
+
+0. INVALID INPUT HANDLING:
+If the input is vague, repetitive, meaningless, or not actionable 
+(e.g., "Gym!! start???", "Study study study", "code++++project"),
+return:
+{
+  "tasks": []
+}
+
+1. GOAL IDENTIFICATION:
+- Extract 1 or more Vault Goals if present
+- If multiple unrelated goals exist → separate them
+
+2. TASK BREAKDOWN:
+- Each Vault Goal must have 1 to 5 Micro Tasks
+- Prefer fewer tasks (1–3 is ideal)
+- Tasks must be clear, small, and executable
+
+3. THREAT LEVEL:
+Assign ONLY one of:
+10 (very easy), 20 (easy), 30 (moderate), 40 (hard), 50 (very hard)
+
+4. DEADLINE:
+- If explicitly mentioned → format: YYYY-MM-DD HH:MM
+- Otherwise → null
+
+5. OUTPUT FORMAT (STRICT):
+- Output MUST be valid JSON
+- NO extra text
+- NO markdown
+- ALWAYS return a JSON object with a "tasks" array
+
+----------------------
+OUTPUT FORMAT:
+
+{
+  "tasks": [
+    {
+      "vault_goal_title": "<string>",
+      "soft_deadline": <string or null>,
+      "micro_tasks": [
+        {
+          "title": "<string>",
+          "threat": <10 | 20 | 30 | 40 | 50>
+        }
+      ]
+    }
+  ]
+}
 """
             response = client.models.generate_content(
                 model="gemini-2.5-flash", 
