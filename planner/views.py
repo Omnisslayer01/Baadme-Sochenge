@@ -185,6 +185,135 @@ End every interaction with:
 - Instruction to report back after completion
 
 ---
+==============================
+### TASK CREATION CONTROL PROTOCOL (UNIFIED)
+==============================
+
+This system controls how tasks are created through a strict 3-phase flow:
+CLARIFY → CONFIRM → EXECUTE
+
+---
+
+### PHASE 1: CLARIFICATION
+
+If the user expresses intent to create a task BUT provides vague, incomplete, or unclear information, you MUST enter clarification mode.
+
+Examples of insufficient input:
+- "Add a task"
+- "I want to study"
+- "Create a project"
+- "Gym"
+- "Work on coding"
+
+---
+
+In clarification mode:
+- Ask targeted questions to gather missing details:
+  - What exactly is the task?
+  - What subject/domain?
+  - Scope (small step vs large goal)?
+  - Any deadline?
+
+- Keep tone in-character (waifu + Cortex)
+- Be direct and efficient (no fluff)
+
+---
+
+STRICT RULES:
+- DO NOT generate tasks
+- DO NOT assume missing details
+- DO NOT create placeholder goals
+
+---
+
+Output:
+- intent = "chat"
+
+---
+
+### PHASE 2: CONFIRMATION
+
+Once sufficient details are gathered:
+
+You MUST generate a SINGLE, COMPLETE, SELF-CONTAINED summary message.
+
+This message must include:
+- Vault Goal (clear and specific)
+- Task scope (what exactly will be done)
+- Any deadline (or explicitly state none)
+
+---
+
+This summary acts as the **final contract**.
+
+At the end of the message, instruct the user:
+
+→ Type "create task" to confirm and proceed.
+
+---
+
+STRICT RULES:
+- Do NOT generate tasks yet
+- Do NOT modify details after this point
+- Ensure summary contains ALL required info
+
+---
+
+Output:
+- intent = "chat"
+
+---
+
+### PHASE 3: EXECUTION TRIGGER
+
+ONLY when the user explicitly types:
+
+→ "create task"
+
+THEN:
+
+- Do NOT re-clarify
+- Do NOT change any details
+- Do NOT ask questions
+
+Respond with a short acknowledgment in-character.
+
+Example:
+"Got it. Locking this in and creating your tasks now."
+
+---
+
+Output:
+- intent = "create_task"
+
+---
+
+### MEMORY REQUIREMENT (CRITICAL)
+
+The confirmation message MUST be:
+- complete
+- structured
+- reusable
+
+This exact message will be passed to the task-generation system.
+
+---
+
+### FAIL-SAFE RULES
+
+- NEVER skip clarification if input is unclear
+- NEVER skip confirmation before execution
+- NEVER generate tasks without explicit user confirmation
+- NEVER hallucinate missing details
+
+---
+
+### OBJECTIVE
+
+Ensure:
+- high-quality task creation
+- zero ambiguity
+- full user awareness before execution
 
 ==============================
 ### TASK CONTEXT
@@ -248,18 +377,21 @@ Valid stamina values:
 
 ### OUTPUT FORMAT
 
-{
-  "stamina": <10 | 20 | 30 | 40 | 50>,
+{{
+  "stamina": <number>,
   "message": "<in-character response including flashlight plan + command>",
   "intent": "<'create_task' OR 'chat'>"
-}
-        """
+}}
+"""
 
         response = client.models.generate_content(
             model="gemini-2.5-flash", 
             contents=prompt
         )
         ai_reply = response.text
+        ai_reply = ai_reply.replace("```json", "")
+        ai_reply = ai_reply.replace("```", "")
+        ai_reply = ai_reply.strip()
 
         try:
             ai_data = json.loads(ai_reply) # type: ignore
@@ -284,7 +416,8 @@ Valid stamina values:
 You are a strict backend database parser. 
 Your job is to convert user input into a structured JSON format for storage.
 
-User Input: "{users_response}"
+AI Input: "{previous_log[-2].message}"
+User Input: "{previous_log[-1].message}"
 
 ----------------------
 DEFINITIONS:
@@ -304,9 +437,9 @@ RULES:
 If the input is vague, repetitive, meaningless, or not actionable 
 (e.g., "Gym!! start???", "Study study study", "code++++project"),
 return:
-{
+{{
   "tasks": []
-}
+}}
 
 1. GOAL IDENTIFICATION:
 - Extract 1 or more Vault Goals if present
@@ -323,7 +456,7 @@ Assign ONLY one of:
 
 4. DEADLINE:
 - If explicitly mentioned → format: YYYY-MM-DD HH:MM
-- Otherwise → null
+- Otherwise → None
 
 5. OUTPUT FORMAT (STRICT):
 - Output MUST be valid JSON
@@ -334,29 +467,46 @@ Assign ONLY one of:
 ----------------------
 OUTPUT FORMAT:
 
-{
+{{
   "tasks": [
-    {
+    {{
       "vault_goal_title": "<string>",
-      "soft_deadline": <string or null>,
+      "soft_deadline": <string or None>,
       "micro_tasks": [
-        {
+        {{
           "title": "<string>",
           "threat": <10 | 20 | 30 | 40 | 50>
-        }
+        }}
       ]
-    }
+    }}
   ]
-}
+}}
 """
             response = client.models.generate_content(
                 model="gemini-2.5-flash", 
                 contents=prompt
                 )
             ai_reply = response.text
+            ai_reply = ai_reply.replace("```json", "")
+            ai_reply = ai_reply.replace("```", "")
+            ai_reply = ai_reply.strip()
             try:
-                ai_data = json.loads(ai_reply) # type: ignore
-                print(f"{timezone.now()} {'AI'}: {ai_data['message']} \n , Users intent is {ai_data['intent']} \n")
+                parser_data = json.loads(ai_reply) # type: ignore
+                for task in parser_data["tasks"]:
+                    goal,created=Vault_Goal.objects.get_or_create(
+                        user=user,
+                        title=task['vault_goal_title'],
+                        defaults={
+                            "soft_deadline": task['soft_deadline']
+                        }
+                        )
+                    for microtask in task["micro_tasks"]:
+                        micro_goal,micro_created=Micro_task.objects.get_or_create(
+                            parent_goal=goal,
+                            title=microtask['title'],
+                            threat=microtask['threat']
+                        )
+                print(f"{timezone.now()} {'AI PARSER'}: {parser_data['tasks']} \n")
                 
 
             except json.JSONDecodeError:
@@ -365,21 +515,4 @@ OUTPUT FORMAT:
         return redirect('home')
     
     return render(request, 'planner/voice.html')
-
-
-
-
-
-
-
-
-        
-
-
-        
-
-        
-
-
-
 
