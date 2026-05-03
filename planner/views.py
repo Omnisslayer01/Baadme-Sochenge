@@ -385,7 +385,7 @@ Valid stamina values:
 """
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash", 
+            model="gemini-3-flash-preview", 
             contents=prompt
         )
         ai_reply = response.text
@@ -416,8 +416,9 @@ Valid stamina values:
 You are a strict backend database parser. 
 Your job is to convert user input into a structured JSON format for storage.
 
-AI Input: "{previous_log[-2].message}"
-User Input: "{previous_log[-1].message}"
+"{previous_log[-2].message}"
+"{previous_log[-1].message}"
+"{previous_log[0].message}"
 
 ----------------------
 DEFINITIONS:
@@ -483,7 +484,7 @@ OUTPUT FORMAT:
 }}
 """
             response = client.models.generate_content(
-                model="gemini-2.5-flash", 
+                model="gemini-3-flash-preview", 
                 contents=prompt
                 )
             ai_reply = response.text
@@ -492,20 +493,23 @@ OUTPUT FORMAT:
             ai_reply = ai_reply.strip()
             try:
                 parser_data = json.loads(ai_reply) # type: ignore
-                for task in parser_data["tasks"]:
-                    goal,created=Vault_Goal.objects.get_or_create(
-                        user=user,
-                        title=task['vault_goal_title'],
-                        defaults={
-                            "soft_deadline": task['soft_deadline']
-                        }
-                        )
-                    for microtask in task["micro_tasks"]:
-                        micro_goal,micro_created=Micro_task.objects.get_or_create(
-                            parent_goal=goal,
-                            title=microtask['title'],
-                            threat=microtask['threat']
-                        )
+                if len(parser_data["tasks"])==0:
+                    request.session['waifu_message']="It looks like you're trying to create a task. Please use the proper 'Create Task' command and try again."
+                else:
+                    for task in parser_data["tasks"]:
+                        goal,created=Vault_Goal.objects.get_or_create(
+                            user=user,
+                            title=task['vault_goal_title'],
+                            defaults={
+                                "soft_deadline": task['soft_deadline']
+                            }
+                            )
+                        for microtask in task["micro_tasks"]:
+                            micro_goal,micro_created=Micro_task.objects.get_or_create(
+                                parent_goal=goal,
+                                title=microtask['title'],
+                                threat=microtask['threat']
+                            )
                 print(f"{timezone.now()} {'AI PARSER'}: {parser_data['tasks']} \n")
                 
 
@@ -515,4 +519,5 @@ OUTPUT FORMAT:
         return redirect('home')
     
     return render(request, 'planner/voice.html')
+
 
