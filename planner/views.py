@@ -69,7 +69,7 @@ def waifu_chat(request):
             sender='USER',
             message=users_response
         )
-
+        
         print(f"{timezone.now()} {'USER'}: {users_response} \n")
 
         previous_log=list(ConversationLog.objects.filter(user=user).order_by('-timestamp')[:10])
@@ -80,6 +80,13 @@ def waifu_chat(request):
             history_log+=f"{log.timestamp} {log.sender} : {log.message} \n"
         
         active_microtasks=Micro_task.objects.filter(parent_goal__user=user, status__in=['active_hunt','bounty_board','tactical_retreat','intervention'])
+
+        active_vaultgoals=Vault_Goal.objects.filter(user=user, is_active=True)
+        vault_goal_titles = active_vaultgoals.values_list('title', flat=True)
+
+        if not vault_goal_titles:
+            print("There are no active Vault Goals, Please use 'Create task' command along with task description to create Vault goals")
+
         dict_of_tasks=[]
         for task in active_microtasks:
             dict_of_tasks.append({
@@ -232,13 +239,16 @@ Output:
 ---
 
 ### PHASE 2: CONFIRMATION
-
+Below is the list of Vault goal titles:
+{vault_goal_titles}
 Once sufficient details are gathered:
 
 You MUST generate a SINGLE, COMPLETE, SELF-CONTAINED summary message.
 
 This message must include:
-- Vault Goal (clear and specific)
+- Vault Goal (clear and specific) - 
+NOTE- If users description fit an existing vault goal then use the title of that vault goal in your message, 
+do not create a new vault goal name, this is to help database redundency
 - Task scope (what exactly will be done)
 - Any deadline (or explicitly state none)
 
@@ -327,8 +337,7 @@ Each task includes:
 - skip_count
 - status
 
-ALL tasks listed are already ≤ current user stamina.
-
+Below is the list of the active tasks
 {dict_of_tasks}
 
 ---
@@ -389,7 +398,7 @@ Valid stamina values:
             contents=prompt
         )
         ai_reply = response.text
-        ai_reply = ai_reply.replace("```json", "")
+        ai_reply = ai_reply.replace("```json", "")  # type: ignore
         ai_reply = ai_reply.replace("```", "")
         ai_reply = ai_reply.strip()
 
@@ -418,7 +427,6 @@ Your job is to convert user input into a structured JSON format for storage.
 
 "{previous_log[-2].message}"
 "{previous_log[-1].message}"
-"{previous_log[0].message}"
 
 ----------------------
 DEFINITIONS:
@@ -441,6 +449,12 @@ return:
 {{
   "tasks": []
 }}
+
+0.5. PRE-EXISTING VAULT GOAL:
+- Below is the list of available vault goals that are active in the dataset
+{vault_goal_titles}
+- If the the task speficied can fit in any of the already existing vault goal then use that name of the vault goal
+- Dont create a seperate name or new name, this is all to help in database redundency
 
 1. GOAL IDENTIFICATION:
 - Extract 1 or more Vault Goals if present
@@ -488,7 +502,7 @@ OUTPUT FORMAT:
                 contents=prompt
                 )
             ai_reply = response.text
-            ai_reply = ai_reply.replace("```json", "")
+            ai_reply = ai_reply.replace("```json", "")  # type: ignore
             ai_reply = ai_reply.replace("```", "")
             ai_reply = ai_reply.strip()
             try:
