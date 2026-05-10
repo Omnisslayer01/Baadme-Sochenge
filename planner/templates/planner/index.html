@@ -1,106 +1,839 @@
-{% extends 'planner/layout.html'%}
+{% extends 'planner/layout.html' %}
+{% load static %}
+
 {% block body %}
-  <!-- clouds -->
-  <div class="cloud cloud-1"></div>
-  <div class="cloud cloud-2"></div>
-  <div class="cloud cloud-3"></div>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;700;900&family=Inter:wght@300;400;500;600&family=IM+Fell+English:ital@0;1&display=swap');
 
-  <div class="app-shell">
+  /* ════════════════════════════════════════════════════
+     MIDNIGHT EMBER — Design Tokens
+     Base: Deep Amethyst  ·  Light: Warm Gold + Teal
+  ════════════════════════════════════════════════════ */
+  :root {
+    /* ── Base backgrounds ── */
+    --bg-root:    #0e0c18;   /* deep warm purple-black     */
+    --bg-left:    #131025;   /* rich amethyst panel        */
+    --bg-right:   #0f0d1e;   /* deep indigo quest board    */
+    --glass:      rgba(16,13,32,0.82);
+    --glass-lite: rgba(22,18,42,0.68);
 
-    <!-- ══════ LEFT: CHARACTER ══════ -->
-    <div class="left-panel">
-      <div class="character-area">
-        <!-- Swap this img src with your anime character image -->
-        <div class="char-placeholder" id="charPlaceholder">
-          🌸
-          <div class="char-placeholder-label">Drop character image here</div>
-        </div>
-        <!-- <img class="character-img" src="your-character.png" alt="Companion" id="charImg"/> -->
-      </div>
+    /* ── Gold — the hero accent ── */
+    --gold:       #c9a84c;
+    --gold-hi:    #e0c060;
+    --gold-pale:  #f0dc90;
+    --gold-dim:   #7a6028;
+    --gold-glow:  rgba(201,168,76,0.32);
+    --gold-glow-s:rgba(201,168,76,0.55);
+    --gold-b:     rgba(201,168,76,0.35);   /* border */
+    --gold-b-hi:  rgba(224,192,90,0.62);   /* border hover */
 
-      <!-- AI Speech Bubble -->
-      <div class="speech-bubble" id="speechBubble">
-        <span class="bubble-heart">💗</span>
-        <div class="bubble-text" id="bubbleText">
-          <span class="loading-dots">
-            <span>●</span><span>●</span><span>●</span>
-          </span>
-        </div>
-        <button class="regen-btn" id="regenBtn" title="New message" onclick="generateDialogue()">↻</button>
+    /* ── Amber — warm lantern light ── */
+    --amber:      #e8922a;
+    --amber-glow: rgba(232,146,42,0.25);
+    --amber-soft: rgba(232,146,42,0.1);
+
+    /* ── Teal — magic / secondary ── */
+    --teal:       #2dd4bf;
+    --teal-dim:   #1a8a7a;
+    --teal-glow:  rgba(45,212,191,0.22);
+    --teal-b:     rgba(45,212,191,0.35);
+
+    /* ── Violet — depth accent ── */
+    --violet:     #8b5cf6;
+    --violet-dim: #5b3db0;
+    --violet-glow:rgba(139,92,246,0.25);
+
+    /* ── Emerald — Defeat button ── */
+    --em:         #10b981;
+    --em-glow:    rgba(16,185,129,0.3);
+    --em-b:       rgba(16,185,129,0.45);
+
+    /* ── Crimson — Retreat button ── */
+    --crimson:    #ef4444;
+    --crimson-glow:rgba(239,68,68,0.3);
+    --crimson-b:  rgba(239,68,68,0.4);
+
+    /* ── Text ── */
+    --tx-gold:    #e8d080;
+    --tx-body:    #c4b5d4;   /* soft lavender-white */
+    --tx-muted:   #7060a0;
+    --tx-faint:   #40306a;
+    --tx-white:   #ede8ff;
+
+    /* ── Misc ── */
+    --border:     rgba(201,168,76,0.25);
+    --shadow:     rgba(0,0,0,0.6);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body, html {
+    width: 100%; height: 100%;
+    background: var(--bg-root);
+    font-family: 'Inter', system-ui, sans-serif;
+    overflow: hidden;
+  }
+
+  /* Very fine grain over everything */
+  body::after {
+    content: ''; position: fixed; inset: 0;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='180' height='180' filter='url(%23n)' opacity='0.04'/%3E%3C/svg%3E");
+    pointer-events: none; z-index: 9999; mix-blend-mode: screen;
+  }
+
+  .screen { display: flex; width: 100vw; height: 100vh; position: relative; }
+
+
+  /* ════════════════════════════════════════════════════
+     LEFT PANEL — 40%  ·  GUILD RECEPTION
+  ════════════════════════════════════════════════════ */
+  .left-panel {
+    width: 40%; height: 100%; position: relative;
+    display: flex; flex-direction: column;
+    background: linear-gradient(170deg, #16122a 0%, #110e22 45%, #0d0b1c 100%);
+    border-right: 1px solid var(--border);
+    box-shadow: 4px 0 50px rgba(0,0,0,0.7), 1px 0 0 rgba(201,168,76,0.06);
+    z-index: 10; overflow: hidden;
+  }
+
+  /* ── Layered ambient orbs — this is what makes dark feel "warm" ── */
+  /* Top amber lantern bloom */
+  .left-panel::before {
+    content: ''; position: absolute; top: -10%; left: 50%; transform: translateX(-50%);
+    width: 130%; height: 70%;
+    background: radial-gradient(ellipse at 50% 15%,
+      rgba(232,146,42,0.10) 0%,
+      rgba(201,168,76,0.05) 30%,
+      transparent 60%
+    );
+    pointer-events: none; z-index: 0;
+  }
+  /* Bottom violet depth glow */
+  .left-panel::after {
+    content: ''; position: absolute; bottom: 0; left: 0; right: 0; height: 50%;
+    background: radial-gradient(ellipse at 50% 100%,
+      rgba(139,92,246,0.08) 0%,
+      transparent 60%
+    );
+    pointer-events: none; z-index: 0;
+  }
+
+  /* ── Guild Header ── */
+  .guild-header {
+    position: absolute; top: 0; left: 0; right: 0; height: 74px;
+    display: flex; align-items: center; justify-content: center; gap: 16px;
+    background: linear-gradient(180deg,
+      rgba(8,6,20,0.98) 0%,
+      rgba(14,11,30,0.92) 100%
+    );
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5), 0 1px 0 rgba(201,168,76,0.07);
+    z-index: 30; padding: 0 28px;
+  }
+  /* Teal accent line under header — breaks the mono-gold */
+  .guild-header::after {
+    content: ''; position: absolute; bottom: -3px; left: 15%; right: 15%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--teal), transparent);
+    opacity: 0.4;
+  }
+
+  .guild-emblem {
+    width: 40px; height: 40px; border: 2px solid var(--gold); transform: rotate(45deg);
+    display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+    background: linear-gradient(135deg, #120f28, #080618);
+    box-shadow: 0 0 22px var(--gold-glow), 0 0 44px var(--amber-soft), inset 0 0 14px rgba(201,168,76,0.14);
+    position: relative;
+    animation: emblem-pulse 4s ease-in-out infinite;
+  }
+  .guild-emblem::before {
+    content: '✦'; font-size: 18px; color: var(--gold-pale);
+    transform: rotate(-45deg); display: block; line-height: 1;
+    text-shadow: 0 0 16px var(--gold-glow-s), 0 0 32px var(--amber-glow);
+  }
+  @keyframes emblem-pulse {
+    0%,100% { box-shadow: 0 0 20px var(--gold-glow), inset 0 0 10px rgba(201,168,76,0.1); }
+    50%      { box-shadow: 0 0 35px var(--gold-glow-s), 0 0 60px var(--amber-soft), inset 0 0 18px rgba(201,168,76,0.2); }
+  }
+
+  .guild-name {
+    font-family: 'Cinzel', serif; font-size: 1.38rem; font-weight: 700;
+    color: var(--gold-pale); letter-spacing: 0.24em;
+    text-shadow: 0 0 24px var(--gold-glow), 0 0 48px var(--amber-soft);
+  }
+  .guild-subtitle {
+    font-size: 0.62rem; font-weight: 500; color: var(--teal-dim);
+    letter-spacing: 0.22em; text-transform: uppercase; margin-top: 3px;
+  }
+
+  /* ── Waifu warm backlight ── */
+  .waifu-glow {
+    position: absolute; bottom: 18%; left: 50%; transform: translateX(-50%);
+    width: 320px; height: 450px;
+    background: radial-gradient(ellipse at 50% 55%,
+      rgba(232,146,42,0.15) 0%,
+      rgba(201,168,76,0.06) 38%,
+      rgba(139,92,246,0.04) 55%,
+      transparent 70%
+    );
+    pointer-events: none; z-index: 0;
+  }
+
+  .waifu-area {
+    position: absolute; bottom: 162px; left: 50%; transform: translateX(-50%);
+    width: 94%; height: calc(100% - 74px - 162px);
+    z-index: 5; display: flex; align-items: flex-end; justify-content: center; overflow: hidden;
+  }
+  .waifu-frame { width: 100%; height: 100%; position: relative; display: flex; align-items: flex-end; justify-content: center; }
+  .waifu-frame img {
+    width: 100%; height: 100%; object-fit: cover; object-position: top center; display: block;
+    -webkit-mask-image: linear-gradient(to bottom, black 46%, transparent 100%);
+    mask-image:         linear-gradient(to bottom, black 46%, transparent 100%);
+  }
+
+  /* ── Counter / Speech base ── */
+  .counter-base {
+    position: absolute; bottom: 0; left: 0; right: 0; height: 162px;
+    background: linear-gradient(0deg,
+      rgba(8,6,20,0.99) 0%,
+      rgba(12,9,26,0.96) 55%,
+      transparent 100%
+    );
+    border-top: 1px solid var(--border);
+    z-index: 20; display: flex; flex-direction: column;
+    align-items: center; justify-content: center; padding: 0 18px 20px; gap: 10px;
+  }
+  .counter-base::before {
+    content: ''; position: absolute; top: 0; left: 10%; right: 10%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--gold-dim), transparent);
+  }
+
+  /* ── Speech Box — dark glass with glow ── */
+  .speech-box {
+    width: 100%; background: var(--glass); border: 1px solid var(--gold-b);
+    border-radius: 12px; padding: 14px 18px; position: relative;
+    backdrop-filter: blur(16px);
+    box-shadow:
+      0 0 0 1px rgba(201,168,76,0.05) inset,
+      0 4px 28px rgba(0,0,0,0.65),
+      0 0 24px var(--amber-soft);
+    transition: border-color 0.3s, box-shadow 0.3s;
+    overflow: hidden;
+  }
+  .speech-box:hover { border-color: var(--gold-b-hi); box-shadow: 0 4px 28px rgba(0,0,0,0.65), 0 0 30px var(--gold-glow); }
+
+  /* Notch pointing up */
+  .speech-box::before {
+    content: ''; position: absolute; top: -7px; left: 50%;
+    transform: translateX(-50%) rotate(45deg); width: 12px; height: 12px;
+    background: #13102a; border-top: 1px solid var(--gold-b); border-left: 1px solid var(--gold-b);
+  }
+
+  /* Glow sweep overlay for the reveal animation */
+  .speech-glow-sweep {
+    position: absolute; top: 0; left: 0; width: 60%; height: 100%;
+    background: linear-gradient(90deg,
+      transparent,
+      rgba(232,146,42,0.15),
+      rgba(201,168,76,0.1),
+      transparent
+    );
+    pointer-events: none; z-index: 2;
+    opacity: 0;
+    transform: translateX(-100%);
+  }
+  .speech-glow-sweep.sweeping {
+    animation: glow-sweep 0.9s ease-out forwards;
+  }
+  @keyframes glow-sweep {
+    0%   { opacity: 0;   transform: translateX(-100%); }
+    15%  { opacity: 1; }
+    85%  { opacity: 0.7; }
+    100% { opacity: 0;   transform: translateX(250%); }
+  }
+
+  .speech-text {
+    font-family: 'IM Fell English', serif; font-size: 0.9rem;
+    color: var(--tx-body); text-align: center; line-height: 1.65;
+    position: relative; z-index: 1;
+  }
+  .speech-text .quote-mark { color: var(--gold); font-size: 1.05rem; text-shadow: 0 0 10px var(--gold-glow); }
+  .speech-text.revealed { animation: text-materialise 0.4s ease both; }
+  @keyframes text-materialise {
+    from { opacity: 0.3; filter: blur(2px); }
+    to   { opacity: 1;   filter: blur(0); }
+  }
+
+  /* ── Voice indicator ── */
+  .voice-indicator { display: flex; align-items: center; gap: 10px; opacity: 0.6; }
+  .voice-indicator span {
+    font-size: 0.58rem; font-weight: 600; letter-spacing: 0.22em;
+    color: var(--teal-dim); text-transform: uppercase;
+  }
+  .wave-bars { display: flex; gap: 3px; align-items: center; height: 14px; }
+  .wave-bars i { display: block; width: 2px; border-radius: 2px; background: var(--teal-dim); animation: wave 1.3s ease-in-out infinite; }
+  .wave-bars i:nth-child(1) { height: 4px;  animation-delay: 0s;    }
+  .wave-bars i:nth-child(2) { height: 10px; animation-delay: 0.15s; }
+  .wave-bars i:nth-child(3) { height: 6px;  animation-delay: 0.3s;  }
+  .wave-bars i:nth-child(4) { height: 12px; animation-delay: 0.45s; }
+  .wave-bars i:nth-child(5) { height: 5px;  animation-delay: 0.6s;  }
+  .wave-bars i:nth-child(6) { height: 8px;  animation-delay: 0.75s; }
+  @keyframes wave { 0%,100% { transform: scaleY(1); opacity: 0.5; } 50% { transform: scaleY(1.9); opacity: 1; } }
+
+
+  /* ════════════════════════════════════════════════════
+     RIGHT PANEL — 60%  ·  QUEST BOARD
+  ════════════════════════════════════════════════════ */
+  .right-panel {
+    width: 60%; height: 100%; position: relative;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    overflow: hidden;
+    background: linear-gradient(155deg, #13102a 0%, #0f0c20 40%, #0b0918 100%);
+  }
+
+  /* Diagonal rune grid — adds texture without noise */
+  .right-panel::before {
+    content: ''; position: absolute; inset: 0;
+    background-image:
+      repeating-linear-gradient(75deg,
+        rgba(139,92,246,0.025) 0px, rgba(139,92,246,0.025) 1px,
+        transparent 1px, transparent 60px
+      ),
+      repeating-linear-gradient(-75deg,
+        rgba(45,212,191,0.02) 0px, rgba(45,212,191,0.02) 1px,
+        transparent 1px, transparent 80px
+      );
+    pointer-events: none; z-index: 0;
+  }
+
+  /* Central warm radiance */
+  .right-panel::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at 50% 48%,
+        rgba(201,168,76,0.055) 0%,
+        rgba(232,146,42,0.025) 30%,
+        transparent 60%
+      ),
+      radial-gradient(ellipse at 50% 100%, rgba(0,0,0,0.5) 0%, transparent 55%);
+    pointer-events: none; z-index: 1;
+  }
+
+  /* ── Ghost cards ── */
+  .ghost-card {
+    position: absolute;
+    background: rgba(14,11,30,0.7); border: 1px solid rgba(201,168,76,0.1);
+    border-radius: 6px; pointer-events: none; z-index: 2;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.45), 0 0 12px rgba(139,92,246,0.06);
+    backdrop-filter: blur(4px);
+  }
+
+  /* ── Cleared count badge ── */
+  .cleared-badge {
+    position: absolute; top: 24px; right: 28px;
+    display: flex; align-items: stretch; border-radius: 10px; overflow: hidden;
+    border: 1px solid var(--gold-b); z-index: 20;
+    box-shadow: 0 0 22px rgba(201,168,76,0.1), 0 4px 20px rgba(0,0,0,0.5);
+    backdrop-filter: blur(12px);
+    animation: fadeUp 0.5s ease 0.05s both;
+  }
+  .cleared-icon {
+    background: linear-gradient(135deg, rgba(201,168,76,0.2), rgba(232,146,42,0.15));
+    border-right: 1px solid var(--gold-b); padding: 10px 14px;
+    display: flex; align-items: center; color: var(--gold-pale);
+    filter: drop-shadow(0 0 5px var(--gold-glow));
+  }
+  .cleared-text {
+    background: rgba(10,8,22,0.92); padding: 8px 18px;
+    display: flex; align-items: center; gap: 10px;
+    font-size: 0.72rem; font-weight: 600; letter-spacing: 0.1em; color: var(--tx-muted);
+  }
+  .cleared-text strong {
+    font-size: 1.5rem; font-weight: 700; color: var(--gold-pale);
+    text-shadow: 0 0 16px var(--gold-glow-s); line-height: 1;
+    font-family: 'Cinzel', serif;
+  }
+
+
+  /* ════════════════════════════════════════════════════
+     BOUNTY TABLET — Magical Dark Card
+  ════════════════════════════════════════════════════ */
+  .task-card-wrap {
+    position: relative; z-index: 10;
+    display: flex; align-items: center; justify-content: center;
+    width: 100%; height: 100%; padding: 40px 48px 96px;
+  }
+
+  .task-card {
+    width: 100%; max-width: 385px; aspect-ratio: 3 / 4;
+    position: relative; display: flex; flex-direction: column;
+    padding: 0 0 20px; border-radius: 12px; overflow: hidden;
+
+    /* Dark glass with layered ambience */
+    background: linear-gradient(148deg,
+      rgba(18,14,38,0.97) 0%,
+      rgba(12,9,26,0.99) 55%,
+      rgba(16,12,34,0.97) 100%
+    );
+    border: 1px solid var(--gold-b);
+    backdrop-filter: blur(24px);
+    box-shadow:
+      /* Gold aura */
+      0 0 0 1px rgba(201,168,76,0.07),
+      0 0 45px rgba(201,168,76,0.14),
+      /* Violet depth bloom */
+      0 0 80px rgba(139,92,246,0.08),
+      /* Hard shadows */
+      0 24px 70px rgba(0,0,0,0.75),
+      /* Inset top highlight */
+      0 1px 0 rgba(201,168,76,0.2) inset;
+
+    transform-style: preserve-3d;
+    transition: box-shadow 0.4s, transform 0.4s, border-color 0.4s;
+    animation: fadeUp 0.65s ease 0.1s both;
+  }
+  .task-card:hover {
+    border-color: var(--gold-b-hi);
+    box-shadow:
+      0 0 0 1px rgba(201,168,76,0.12),
+      0 0 60px rgba(201,168,76,0.22),
+      0 0 100px rgba(139,92,246,0.12),
+      0 0 100px rgba(232,146,42,0.06),
+      0 28px 70px rgba(0,0,0,0.8),
+      0 1px 0 rgba(201,168,76,0.28) inset;
+    transform: translateY(-7px) rotateX(1.5deg);
+  }
+
+  /* Corner gold glints */
+  .task-card::before {
+    content: ''; position: absolute; inset: 0; border-radius: 12px;
+    background:
+      radial-gradient(circle at 0% 0%,   rgba(201,168,76,0.1) 0%, transparent 25%),
+      radial-gradient(circle at 100% 0%,  rgba(45,212,191,0.06) 0%, transparent 22%),
+      radial-gradient(circle at 0% 100%,  rgba(139,92,246,0.06) 0%, transparent 22%),
+      radial-gradient(circle at 100% 100%,rgba(201,168,76,0.07) 0%, transparent 22%);
+    pointer-events: none; z-index: 0;
+  }
+  /* Slow shimmer sweep */
+  .task-card::after {
+    content: ''; position: absolute; top: 0; left: -100%; width: 50%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(201,168,76,0.04), transparent);
+    pointer-events: none; z-index: 0;
+    animation: card-shimmer 9s ease-in-out infinite 3s;
+  }
+  @keyframes card-shimmer { 0%,100% { left: -100%; } 50% { left: 155%; } }
+
+  .task-card > * { position: relative; z-index: 1; }
+
+  /* ── Ribbon: teal-to-dark with gold border ── */
+  .card-ribbon {
+    width: 100%;
+    background: linear-gradient(135deg,
+      rgba(10,20,28,0.98) 0%,
+      rgba(8,22,20,0.97) 50%,
+      rgba(10,18,26,0.98) 100%
+    );
+    padding: 15px 20px 13px;
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px solid var(--gold-b); position: relative; flex-shrink: 0;
+  }
+  /* Teal accent shimmer under ribbon — the distinguishing touch */
+  .card-ribbon::after {
+    content: ''; position: absolute; bottom: -4px; left: 8%; right: 8%; height: 1px;
+    background: linear-gradient(90deg, transparent, var(--teal), transparent);
+    opacity: 0.38; filter: blur(0.5px);
+  }
+
+  /* Gold orb pushpin */
+  .pushpin {
+    position: absolute; top: -11px; left: 50%; transform: translateX(-50%);
+    width: 22px; height: 22px; border-radius: 50%;
+    background: radial-gradient(circle at 35% 30%, var(--gold-pale), var(--gold) 52%, #5a3c0a);
+    box-shadow: 0 0 14px var(--gold-glow-s), 0 0 30px var(--gold-glow), 0 3px 8px rgba(0,0,0,0.7);
+    z-index: 30;
+  }
+  .pushpin::after {
+    content: ''; position: absolute; bottom: -9px; left: 50%; transform: translateX(-50%);
+    width: 3px; height: 10px;
+    background: linear-gradient(var(--gold-dim), rgba(90,60,10,0.3));
+    border-radius: 0 0 2px 2px;
+  }
+
+  .card-label {
+    font-size: 0.55rem; font-weight: 600; letter-spacing: 0.3em;
+    color: var(--tx-muted); text-transform: uppercase;
+  }
+  .rank-badge {
+    background: rgba(45,212,191,0.08); border: 1px solid var(--teal-b);
+    border-radius: 5px; padding: 5px 12px; display: flex; align-items: baseline; gap: 6px;
+    backdrop-filter: blur(8px);
+    box-shadow: 0 0 12px var(--teal-glow);
+  }
+  .rank-label { font-size: 0.48rem; font-weight: 600; letter-spacing: 0.18em; color: var(--teal-dim); text-transform: uppercase; }
+  .rank-value {
+    font-family: 'Cinzel', serif; font-size: 1.1rem; font-weight: 900;
+    color: var(--teal); text-shadow: 0 0 14px var(--teal-glow), 0 0 28px rgba(45,212,191,0.2);
+    line-height: 1;
+  }
+
+  /* ── Image with dark cinematic vignette ── */
+  .card-image {
+    flex: 1; position: relative; overflow: hidden; margin: 14px 16px 0;
+    border-radius: 6px; border: 1px solid rgba(201,168,76,0.18);
+    box-shadow: inset 0 0 40px rgba(0,0,0,0.7), 0 0 14px rgba(201,168,76,0.07);
+  }
+  .card-image img { width: 100%; height: 100%; object-fit: cover; display: block; opacity: 0.9; }
+  .card-image::after {
+    content: ''; position: absolute; inset: 0;
+    background:
+      radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,0.6) 100%),
+      linear-gradient(to bottom, rgba(0,0,0,0.15) 0%, transparent 25%, rgba(0,0,0,0.25) 100%);
+    pointer-events: none;
+  }
+
+  /* ── Title block ── */
+  .card-title-block { text-align: center; padding: 14px 18px 0; }
+  .card-title {
+    font-family: 'Cinzel', serif; font-size: 1.05rem; font-weight: 700;
+    color: var(--tx-white); letter-spacing: 0.05em; line-height: 1.35; margin-bottom: 8px;
+    text-shadow: 0 0 18px rgba(201,168,76,0.15);
+  }
+  .card-divider { display: flex; align-items: center; justify-content: center; gap: 10px; }
+  .card-divider span { flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(45,212,191,0.3)); }
+  .card-divider span:last-child { background: linear-gradient(90deg, rgba(45,212,191,0.3), transparent); }
+  .card-divider em {
+    font-size: 0.58rem; font-style: normal; font-weight: 500;
+    color: var(--teal-dim); letter-spacing: 0.18em; text-transform: uppercase; white-space: nowrap;
+    text-shadow: 0 0 8px var(--teal-glow);
+  }
+
+  /* ── Action buttons — glowing dark glass ── */
+  .card-actions { display: flex; gap: 10px; padding: 14px 18px 0; }
+  .btn-defeat, .btn-retreat {
+    flex: 1; padding: 13px 10px; border: none; border-radius: 7px;
+    font-size: 0.7rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+    cursor: pointer; transition: all 0.22s; position: relative; overflow: hidden;
+  }
+  /* Sheen */
+  .btn-defeat::before, .btn-retreat::before {
+    content: ''; position: absolute; top: 0; left: -120%; width: 55%; height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
+    transition: left 0.4s;
+  }
+  .btn-defeat:hover::before, .btn-retreat:hover::before { left: 170%; }
+
+  .btn-defeat {
+    background: linear-gradient(155deg, rgba(10,60,38,0.9), rgba(5,28,18,0.96));
+    color: #6ee7b7; border: 1px solid var(--em-b);
+    box-shadow: 0 0 18px var(--em-glow), 0 3px 12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(110,231,183,0.1);
+  }
+  .btn-defeat:hover {
+    background: linear-gradient(155deg, rgba(16,90,55,0.95), rgba(8,40,26,0.96));
+    box-shadow: 0 0 32px rgba(16,185,129,0.5), 0 4px 18px rgba(0,0,0,0.55);
+    transform: translateY(-2px);
+  }
+  .btn-defeat:active { transform: translateY(1px); }
+
+  .btn-retreat {
+    background: linear-gradient(155deg, rgba(80,12,12,0.88), rgba(40,5,5,0.96));
+    color: #fca5a5; border: 1px solid var(--crimson-b);
+    box-shadow: 0 0 18px var(--crimson-glow), 0 3px 12px rgba(0,0,0,0.55), inset 0 1px 0 rgba(252,165,165,0.1);
+  }
+  .btn-retreat:hover {
+    background: linear-gradient(155deg, rgba(120,16,16,0.92), rgba(60,8,8,0.96));
+    box-shadow: 0 0 32px rgba(239,68,68,0.5), 0 4px 18px rgba(0,0,0,0.55);
+    transform: translateY(-2px);
+  }
+  .btn-retreat:active { transform: translateY(1px); }
+
+
+  /* ════════════════════════════════════════════════════
+     EMPTY STATE
+  ════════════════════════════════════════════════════ */
+  .empty-state { text-align: center; padding: 48px 32px; position: relative; z-index: 10; }
+  .empty-emblem {
+    width: 92px; height: 92px; border: 1px solid var(--gold-b); border-radius: 50%;
+    display: flex; align-items: center; justify-content: center; margin: 0 auto 24px;
+    background: var(--glass); backdrop-filter: blur(12px);
+    box-shadow: 0 0 28px rgba(201,168,76,0.1), 0 0 50px rgba(139,92,246,0.08), 0 8px 36px rgba(0,0,0,0.5);
+  }
+  .empty-emblem svg { width: 40px; height: 40px; color: var(--gold-dim); opacity: 0.75; }
+  .empty-title {
+    font-family: 'Cinzel', serif; font-size: 1.45rem; color: var(--tx-gold);
+    margin-bottom: 10px; letter-spacing: 0.1em; text-shadow: 0 0 22px var(--gold-glow);
+  }
+  .empty-sub { font-family: 'IM Fell English', serif; font-style: italic; color: var(--tx-muted); font-size: 1rem; }
+
+
+  /* ════════════════════════════════════════════════════
+     MIC BUTTON
+  ════════════════════════════════════════════════════ */
+  .mic-area {
+    position: absolute; bottom: 30px; right: 38px; z-index: 30;
+    display: flex; flex-direction: column; align-items: center; gap: 8px;
+    animation: fadeUp 0.5s ease 0.22s both;
+  }
+  .mic-label {
+    font-size: 0.55rem; font-weight: 600; letter-spacing: 0.24em;
+    color: var(--gold-dim); text-transform: uppercase; text-shadow: 0 0 8px var(--gold-glow);
+  }
+  .mic-btn {
+    width: 72px; height: 72px; border-radius: 50%; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    position: relative; transition: all 0.22s;
+    background: radial-gradient(circle at 38% 38%, rgba(35,28,65,0.97), rgba(10,8,22,0.99));
+    border: 2px solid var(--gold);
+    box-shadow:
+      0 0 0 5px rgba(201,168,76,0.1),
+      0 0 26px rgba(201,168,76,0.22),
+      0 0 45px rgba(232,146,42,0.08),
+      0 8px 30px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(201,168,76,0.15);
+  }
+  .mic-btn:hover {
+    border-color: var(--gold-pale);
+    box-shadow:
+      0 0 0 8px rgba(201,168,76,0.12), 0 0 40px rgba(201,168,76,0.38),
+      0 0 70px rgba(232,146,42,0.14), 0 8px 34px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(201,168,76,0.22);
+    transform: scale(1.06);
+  }
+  .mic-btn:active, .mic-btn.listening {
+    border-color: var(--gold-hi);
+    box-shadow:
+      0 0 0 11px rgba(201,168,76,0.15), 0 0 55px rgba(201,168,76,0.5),
+      0 0 90px rgba(232,146,42,0.2), 0 8px 34px rgba(0,0,0,0.7),
+      inset 0 1px 0 rgba(201,168,76,0.28);
+    transform: scale(0.97);
+  }
+  .mic-btn::before {
+    content: ''; position: absolute; inset: -10px; border-radius: 50%;
+    border: 1.5px solid rgba(201,168,76,0.38); opacity: 0;
+    animation: mic-pulse 2.8s ease-out infinite;
+  }
+  .mic-btn::after {
+    content: ''; position: absolute; inset: -20px; border-radius: 50%;
+    border: 1px solid rgba(45,212,191,0.2); opacity: 0;
+    animation: mic-pulse 2.8s ease-out infinite 0.9s;
+  }
+  @keyframes mic-pulse { 0% { opacity: 0.75; transform: scale(1); } 100% { opacity: 0; transform: scale(1.38); } }
+  .mic-icon {
+    width: 27px; height: 27px; color: var(--gold-pale);
+    filter: drop-shadow(0 0 7px var(--gold-glow)) drop-shadow(0 0 14px var(--amber-glow));
+  }
+
+
+  /* ════════════════════════════════════════════════════
+     PARTICLES — Golden Embers
+  ════════════════════════════════════════════════════ */
+  .particle {
+    position: absolute; border-radius: 50%; pointer-events: none; z-index: 2;
+    background: radial-gradient(circle, rgba(232,146,42,0.8) 0%, rgba(201,168,76,0.3) 40%, transparent 70%);
+    filter: blur(0.5px);
+  }
+  @keyframes drift {
+    0%   { transform: translateY(0) scale(1);      opacity: 0.65; }
+    60%  { opacity: 0.9; }
+    100% { transform: translateY(-115px) scale(0.5); opacity: 0; }
+  }
+
+  /* ════════════════════════════════════════════════════
+     SHARED ANIMATIONS
+  ════════════════════════════════════════════════════ */
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(18px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .cleared-badge { animation: fadeUp 0.5s ease 0.05s both; }
+  .speech-box    { animation: fadeUp 0.5s ease 0.15s both; }
+</style>
+
+<div class="screen">
+
+  <!-- LEFT PANEL — GUILD RECEPTION (40%) -->
+  <div class="left-panel">
+
+    <div class="guild-header">
+      <div class="guild-emblem"></div>
+      <div>
+        <div class="guild-name">Ad Astra</div>
+        <div class="guild-subtitle">Guild Headquarters</div>
       </div>
     </div>
 
-    <!-- ══════ RIGHT: TASKS ══════ -->
-    <div class="right-panel">
+    <div class="waifu-glow"></div>
 
-      <!-- Stats bar -->
-      <div class="stats-bar">
-        <div class="stat-chip">
-          <span class="stat-chip-label">Tasks Completed</span>
-          <span class="stat-chip-value" id="statCompleted">5</span>
-        </div>
+    <div class="waifu-area">
+      <div class="waifu-frame">
+        {% comment %} <img src="{% static 'images/waifu_'|add:waifu_emotion|default:'neutral'|add:'.png' %}" alt="Waifu" class="object-cover w-full h-full"> {% endcomment %}
       </div>
-
-      <!-- Task list -->
-      <div class="task-panel">
-        <div class="task-panel-title">
-          📋 Today's Tasks
-        </div>
-
-        <!-- Task 1 -->
-          <div class="task-item active-task">  <!-- in this class put 'active-task' to get a darker highlight on the webpage-->
-            <div class="task-header">
-              <div class="task-name">
-                <span class="task-num">✨</span> {{flashlight_task.title}}
-              </div>
-              <div class="energy-badge">
-                <span class="energy-label">Energy:</span>
-                <span class="energy-val-high">{{flashlight_task.energy_cost}}</span>
-                <span class="energy-bar bar-high"></span>
-              </div>
-            </div>
-            <!-- <div class="subtask-row">
-              <span class="subtask-icon">✅</span> Outline the main points
-            </div>
-            <div class="subtask-row">
-              <span class="subtask-icon">✅</span> Draft the introduction
-            </div>
-            <div class="subtask-row" style="opacity:0.5;">
-              <span class="subtask-icon">⬜</span> Write conclusion
-            </div> -->
-          </div>
-
-        
-      <!-- Energy footer -->
-      <div class="energy-footer">
-        <div class="energy-footer-item">
-          Your Energy Level:
-          <div class="big-bar" style="width:80px;background:linear-gradient(to right,#27ae60,#2ecc71);"></div>
-        </div>
-        <div class="energy-footer-item" style="margin-left:auto;">
-          Task Energy Level:
-          <div class="big-bar" style="width:70px;background:linear-gradient(to right,#c0392b,#e74c3c);"></div>
-        </div>
-      </div>
-
-      <!-- Action buttons -->
-      <div class="action-row">
-        {% if not task and task_Cost == 0 %}
-
-        {% else %}
-          <form method="POST" action="{% url 'update_task' %}" class="flex gap-2 w-full mt-4">
-            {% csrf_token %}
-            <input type="hidden" name="task_id" value="{{task.id}}">
-            <button class="btn-complete" type="submit" name="action" value="complete">
-              ✔ Complete Task
-            </button>
-            <button class="btn-skip" type="submit" name="action" value="skip">
-              ✕ Skip Task
-            </button>
-          </form>
-        {% endif %}
-      </div>
-
     </div>
+
+    <div class="counter-base">
+      <div class="speech-box" id="speechBox">
+        <!-- Glow sweep overlay (JS-controlled) -->
+        <div class="speech-glow-sweep" id="glowSweep"></div>
+        <p class="speech-text" id="speechText">
+          <span class="quote-mark">"</span><span id="msgContent">{{ waifu_message }}</span><span class="quote-mark">"</span>
+        </p>
+      </div>
+      <div class="voice-indicator">
+        <span>Listening</span>
+        <div class="wave-bars">
+          <i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+      </div>
+    </div>
+
   </div>
+
+  <!-- RIGHT PANEL — QUEST BOARD (60%) -->
+  <div class="right-panel">
+
+    <div class="ghost-card" style="width:150px;height:210px;top:10%;left:4%;transform:rotate(-12deg);opacity:0.45;filter:blur(1px);"></div>
+    <div class="ghost-card" style="width:130px;height:190px;bottom:10%;right:6%;transform:rotate(8deg);opacity:0.38;filter:blur(1.5px);"></div>
+    <div class="ghost-card" style="width:110px;height:160px;top:15%;right:3%;transform:rotate(20deg);opacity:0.28;filter:blur(2.5px);"></div>
+
+    <div class="particle" style="width:4px;height:4px;top:65%;left:18%;animation:drift 7s infinite linear;"></div>
+    <div class="particle" style="width:3px;height:3px;top:75%;left:55%;animation:drift 5.5s infinite linear 2s;"></div>
+    <div class="particle" style="width:3px;height:3px;top:80%;left:78%;animation:drift 8.5s infinite linear 4s;"></div>
+    <div class="particle" style="width:5px;height:5px;top:58%;left:36%;animation:drift 6.5s infinite linear 1s;"></div>
+    <div class="particle" style="width:2px;height:2px;top:70%;left:70%;animation:drift 9s infinite linear 3s;"></div>
+
+    <div class="cleared-badge">
+      <div class="cleared-icon">
+        <svg width="18" height="18" fill="currentColor" viewBox="0 0 20 20">
+          <path d="M9 2a1 1 0 000 2h2a1 1 0 100-2H9z"/>
+          <path fill-rule="evenodd" d="M4 5a2 2 0 012-2 3 3 0 003 3h2a3 3 0 003-3 2 2 0 012 2v11a2 2 0 01-2 2H6a2 2 0 01-2-2V5zm5 4a1 1 0 10-2 0v1H6a1 1 0 100 2h1v1a1 1 0 102 0v-1h1a1 1 0 100-2H9V9z" clip-rule="evenodd"/>
+        </svg>
+      </div>
+      <div class="cleared-text">
+        Bounties Cleared &nbsp;<strong>{{ cleared_count }}</strong>
+      </div>
+    </div>
+
+    <div class="task-card-wrap">
+
+      {% if flashlight_task %}
+
+      <div class="task-card">
+
+        <div class="pushpin"></div>
+
+        <div class="card-ribbon">
+          <div class="card-label">Target Acquired</div>
+          <div class="rank-badge">
+            <span class="rank-label">Rank</span>
+            <span class="rank-value">{{ flashlight_task.get_threat_display }}</span>
+          </div>
+        </div>
+
+        <div class="card-image">
+          <img
+            src="{% static 'planner/rank_'|add:flashlight_task.threat|stringformat:'s'|add:'.jpg' %}"
+            alt="Bounty Target"
+          >
+        </div>
+
+        <div class="card-title-block">
+          <h3 class="card-title">{{ flashlight_task.title }}</h3>
+          <div class="card-divider">
+            <span></span>
+            <em>Active Bounty</em>
+            <span></span>
+          </div>
+        </div>
+
+        <form method="POST" action="{% url 'update_task' %}" class="card-actions">
+          {% csrf_token %}
+          <input type="hidden" name="task_id" value="{{ flashlight_task.id }}">
+          <button type="submit" name="action" value="complete" class="btn-defeat">Defeat</button>
+          <button type="submit" name="action" value="skip"     class="btn-retreat">Retreat</button>
+        </form>
+
+      </div>
+
+      {% else %}
+
+      <div class="empty-state">
+        <div class="empty-emblem">
+          <svg fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.2"
+              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+          </svg>
+        </div>
+        <div class="empty-title">No Active Bounties</div>
+        <div class="empty-sub">The board is clear, adventurer. Rest well.</div>
+      </div>
+
+      {% endif %}
+
+    </div>
+
+    <div class="mic-area">
+      <span class="mic-label">Hold to Talk</span>
+      <button class="mic-btn" id="micBtn">
+        <svg class="mic-icon" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.8"
+            d="M19 11a7 7 0 01-7 7m0 0a7 7 0 01-7-7m7 7v4m0 0H8m4 0h4
+               M12 3a4 4 0 014 4v4a4 4 0 01-8 0V7a4 4 0 014-4z"/>
+        </svg>
+      </button>
+    </div>
+
+  </div>
+
+</div>
+
+<script>
+  /* ── Mic hold-to-talk ── */
+  const btn = document.getElementById('micBtn');
+  btn.addEventListener('mousedown',  () => btn.classList.add('listening'));
+  btn.addEventListener('touchstart', () => btn.classList.add('listening'), { passive: true });
+  btn.addEventListener('mouseup',    () => btn.classList.remove('listening'));
+  btn.addEventListener('mouseleave', () => btn.classList.remove('listening'));
+  btn.addEventListener('touchend',   () => btn.classList.remove('listening'));
+
+  /* ══════════════════════════════════════════════════════
+     GLOW-SWEEP MESSAGE REVEAL
+     Fires whenever waifu_message changes (call revealMessage(text))
+     On page load we run it once for the initial message.
+  ══════════════════════════════════════════════════════ */
+  const msgContent = document.getElementById('msgContent');
+  const glowSweep  = document.getElementById('glowSweep');
+  const speechText = document.getElementById('speechText');
+
+  function revealMessage(newText) {
+    // 1. Update content
+    if (newText !== undefined) msgContent.textContent = newText;
+
+    // 2. Reset speech text opacity and blur
+    speechText.classList.remove('revealed');
+    speechText.style.opacity = '0.2';
+    speechText.style.filter  = 'blur(3px)';
+
+    // 3. Restart sweep animation
+    glowSweep.classList.remove('sweeping');
+    // Force reflow so the animation restarts
+    void glowSweep.offsetWidth;
+    glowSweep.classList.add('sweeping');
+
+    // 4. Fade+unblur text in sync with sweep (peaks at ~0.45s)
+    requestAnimationFrame(() => {
+      speechText.style.transition = 'opacity 0.45s ease 0.05s, filter 0.45s ease 0.05s';
+      speechText.style.opacity    = '1';
+      speechText.style.filter     = 'blur(0)';
+    });
+
+    // 5. Clean up sweep class after animation finishes
+    setTimeout(() => glowSweep.classList.remove('sweeping'), 950);
+  }
+
+  // Fire on page load for the initial Django-rendered message
+  window.addEventListener('DOMContentLoaded', () => revealMessage());
+
+  /* ── Expose globally so your voice/websocket code can call it ──
+     e.g.: window.revealMessage("Your new waifu response here")   */
+  window.revealMessage = revealMessage;
+</script>
+
 {% endblock %}
