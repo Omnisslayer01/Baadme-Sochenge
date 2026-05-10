@@ -389,6 +389,7 @@ Valid stamina values:
 {{
   "stamina": <number>,
   "message": "<in-character response including flashlight plan + command>",
+  "emotion":"<happiness, sadness, fear, anger, surprise, disgust | select and return one, which would be most appropriate for waifu to display>",
   "intent": "<'create_task' OR 'chat'>"
 }}
 """
