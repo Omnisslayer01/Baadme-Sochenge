@@ -55,7 +55,7 @@ def update_task(request):
 @login_required
 def waifu_chat(request):
     user=request.user
-    my_state=User_state.objects.get(user=user)
+    my_state=User_state.objects.get_or_create(user=user)
     user_stamina=my_state.current_stamina
 
     if request.method == 'POST':
