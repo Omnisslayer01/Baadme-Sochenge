@@ -13,7 +13,7 @@ load_dotenv()
 @login_required
 def flashlight_tasks(request):
     user=request.user
-    user_state=User_state.objects.get(user=user)
+    user_state=User_state.objects.get_or_create(user=user)
     user_stamina=user_state.current_stamina
     microtask=Micro_task.objects.filter(
         parent_goal__user=user,
